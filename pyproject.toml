@@ -1,0 +1,12 @@
+[project]
+name = "awssuportwork"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "great-expectations[snowflake]>=1.24.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.7",
+    "skills>=0.3.0",
+]

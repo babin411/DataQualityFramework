@@ -1,0 +1,43 @@
+# Local stand-ins for AWS, for development. Snowflake is the real one.
+#
+#   make local-up       start LocalStack and the mail catcher
+#   make local-deploy   build the code and deploy infra/cloudformation.yaml to LocalStack
+#
+# LocalStack 4.9 is the last open-source community release: it starts without an account or token,
+# and its licence (Apache 2.0) allows work use. It has Lambda, S3, SNS, SQS, Secrets Manager,
+# EventBridge and CloudFormation, but not ECR, so locally the Lambda runs from a mounted code folder
+# instead of a container image.
+name: dqf-local
+
+services:
+  localstack:
+    image: localstack/localstack:4.9
+    ports:
+      - "127.0.0.1:4566:4566"
+    environment:
+      # Lambda containers join this network, so they can reach the mail catcher by name.
+      LAMBDA_DOCKER_NETWORK: dqf-local
+      # Great Expectations takes a while to import on a cold start.
+      LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT: "120"
+      # Keep a warm Lambda container for 10 minutes between calls.
+      LAMBDA_KEEPALIVE_MS: "600000"
+      DEBUG: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - localstack-data:/var/lib/localstack
+    networks: [dqf-local]
+
+  # Catches email sent by the "email" alert channel and shows it at http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+    networks: [dqf-local]
+
+volumes:
+  localstack-data:
+
+networks:
+  dqf-local:
+    name: dqf-local

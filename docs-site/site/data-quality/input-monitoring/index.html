@@ -1,0 +1,2835 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Underwriting real-time decisioning (AWS + Snowflake) and the Risk Monitoring feature store pipeline - architecture, data flow, and runbooks">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../feature-score-monitoring/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Input monitoring - UW Decisioning & Risk Monitoring</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/furo.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#input-monitoring-brd-part-1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="UW Decisioning &amp; Risk Monitoring" class="md-header__button md-logo" aria-label="UW Decisioning & Risk Monitoring" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            UW Decisioning & Risk Monitoring
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Input monitoring
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="UW Decisioning &amp; Risk Monitoring" class="md-nav__button md-logo" aria-label="UW Decisioning & Risk Monitoring" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    UW Decisioning & Risk Monitoring
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Underwriting Decisioning
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Underwriting Decisioning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upstream-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Before the config tables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-end data flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../worked-example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worked example (2 merchants)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisioning-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisioning lanes & layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../state-machine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inside the state machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../support-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support engineer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Risk Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Feature Risk Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step1-arrays/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 1: Update Arrays
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step2-features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 2: Compute Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step3-registration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 3: Registration & Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/backfill-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backfill runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring Kickoff
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Monitoring Kickoff
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/whiteboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The whiteboard, decoded
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/discussion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What was discussed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/brd-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From kickoff to BRD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Quality Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Quality Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ground-rules-from-the-brd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ground rules from the BRD
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-snowflake-path-means" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What "Snowflake Path" means
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-check-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The check types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-variable-matrix-as-drafted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The variable matrix (as drafted)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The variable matrix (as drafted)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-read-a-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to read a row
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-one-hour-of-application-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example: one hour of application data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-on-each-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on each run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-gap-availability-isnt-checked-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage gap: "availability" isn't checked yet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature-score-monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature & score monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../review-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review notes & open questions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    After the BRD: Next Steps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    After the BRD: Next Steps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/what-to-monitor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What to monitor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/mvp-build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building the MVP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/communications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emails, Jira & review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/check-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check-in: templates & timeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/poc-getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    POC: getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/requirements-update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements update: reconciliation & no-activity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/implementation-support-doc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Support Document (UW US V2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/dq-framework-build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The framework: design and status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework: How It Works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework: How It Works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/end-to-end/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-end flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    One-time setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/running/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The code, module by module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework: Lift & Shift to AWS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework: Lift & Shift to AWS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What changes and what to ask for
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step by step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hosting the report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/operate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    After go-live
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework Blueprint
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework Blueprint
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-1-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1: Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/reference-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-2-features-scores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2: Features & scores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-3-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3: Model & rule performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations & alerting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap & governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ground-rules-from-the-brd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ground rules from the BRD
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-snowflake-path-means" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What "Snowflake Path" means
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-check-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The check types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-variable-matrix-as-drafted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The variable matrix (as drafted)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The variable matrix (as drafted)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-read-a-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to read a row
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-one-hour-of-application-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example: one hour of application data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-happens-on-each-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on each run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-gap-availability-isnt-checked-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage gap: "availability" isn't checked yet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="input-monitoring-brd-part-1">Input monitoring (BRD Part 1)<a class="headerlink" href="#input-monitoring-brd-part-1" title="Permanent link">&para;</a></h1>
+<p>Input monitoring checks the <strong>raw data coming in</strong>: application fields and responses from LexisNexis,
+TMX and the bureau. The question for every field is: <em>is this data present and valid?</em></p>
+<h2 id="ground-rules-from-the-brd">Ground rules from the BRD<a class="headerlink" href="#ground-rules-from-the-brd" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Input monitoring covers <strong>raw data only</strong>.</li>
+<li>It checks the <strong>quality of the input itself</strong>. There is <strong>no comparison</strong> between a benchmark/base
+  population and the active population. That comparison belongs to
+  <a href="../feature-score-monitoring/">feature &amp; score monitoring</a>.</li>
+<li>Every check on every variable produces <strong>PASS or FAIL</strong> against its configured criteria.</li>
+<li>The reporting frequency is decided (see below). The <strong>alert channel</strong> (email) and <strong>alert frequency</strong>
+  are still under discussion. The draft suggests a set of <strong>sensitive or important fields</strong> whose alerts
+  could be sent at the end of the day or on another schedule. (That sentence is cut off in the
+  screenshot.)</li>
+</ul>
+<h2 id="required-parameters">Required parameters<a class="headerlink" href="#required-parameters" title="Permanent link">&para;</a></h2>
+<p>These are set once for the monitoring job:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snowflake Path</td>
+<td>(link)</td>
+<td><strong>Which data to check</strong>: the Snowflake table or view the checks run against. <a href="#what-snowflake-path-means">Explained below</a>.</td>
+</tr>
+<tr>
+<td>Scheduled</td>
+<td>Yes</td>
+<td>The checks run on a schedule, not on demand.</td>
+</tr>
+<tr>
+<td>Reporting Freq (Scheduled = Y)</td>
+<td>Weekly</td>
+<td>A summary report is produced every week.</td>
+</tr>
+<tr>
+<td>Alert Freq</td>
+<td>Hourly</td>
+<td>Failures are evaluated, and alerts sent, every hour.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-snowflake-path-means">What "Snowflake Path" means<a class="headerlink" href="#what-snowflake-path-means" title="Permanent link">&para;</a></h3>
+<div class="admonition abstract">
+<p class="admonition-title">In short</p>
+</div>
+<p><strong>Snowflake Path is the address of the data the checks run against</strong>: one table or view in
+Snowflake, written as its full three-part name <code>DATABASE.SCHEMA.TABLE</code>. It answers the question
+<em>"which data are we checking?"</em>. Despite the word "path", it is <strong>not</strong> a folder or a file location.</p>
+<p><strong>The three parts.</strong> Snowflake organises data as database → schema → table, and a table's full name
+joins all three with dots. A real example from the <a href="../../feature-store/step1-arrays/">feature store</a>:</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Example</th>
+<th>Think of it as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Database</td>
+<td><code>GBS_PROD_CRANALYTICS</code></td>
+<td>the top-level container</td>
+</tr>
+<tr>
+<td>Schema</td>
+<td><code>CRAGGR</code></td>
+<td>a group of related tables inside it</td>
+</tr>
+<tr>
+<td>Table</td>
+<td><code>CR_AGG_RMI_INFO</code></td>
+<td>the actual data</td>
+</tr>
+<tr>
+<td><strong>Path</strong></td>
+<td><code>GBS_PROD_CRANALYTICS.CRAGGR.CR_AGG_RMI_INFO</code></td>
+<td>all three joined</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What the BRD actually says.</strong> In the draft, every Snowflake Path value is just the word <strong>"Link"</strong>:
+a hyperlink placeholder, most likely meant to open the table in Snowflake's web UI <strong>(inferred)</strong>. <strong>No
+real table has been named yet.</strong> Until it is, the checks have nothing to run against.</p>
+<p><strong>How many paths, and what they should point to:</strong></p>
+<table>
+<thead>
+<tr>
+<th>BRD tab</th>
+<th>Parameter</th>
+<th>Should point to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input Monitoring</td>
+<td>Snowflake Path</td>
+<td>The raw input data. Per the <a href="../../kickoff/discussion/#2-input-data-layer-1">kickoff</a>, the <strong>A1</strong> dataset on Day 1, then <strong>one table per source</strong> (LexisNexis, GNF, application, ...) on Day 2 <strong>(inferred)</strong>. For <strong>UW</strong>, the 1:1 named the <strong>API request table</strong> (<a href="../../next-steps/what-to-monitor/">details</a>).</td>
+</tr>
+<tr>
+<td>Feature_Scores</td>
+<td>Snowflake Path: <strong>Benchmark</strong></td>
+<td>The <strong>reference</strong> population: features and scores from a fixed past period.</td>
+</tr>
+<tr>
+<td>Feature_Scores</td>
+<td>Snowflake Path: <strong>Active</strong></td>
+<td><strong>Recent</strong> production features and scores, refreshed daily.</td>
+</tr>
+</tbody>
+</table>
+<p>For features and scores, both paths will most likely point into the Snowflake <strong>historical table</strong>
+loaded from the model service's JSON output (<a href="../../data-flow/#band-3-asynchronous-transaction-logging-bottom">step 5c</a>).
+In that case Benchmark and Active could be <strong>the same table filtered to different date ranges</strong>
+<strong>(inferred)</strong>.</p>
+<p><strong>What the path alone doesn't tell you.</strong> To run hourly checks, each path also needs:</p>
+<ul>
+<li><strong>A timestamp column</strong>, to select "the last hour" of records.</li>
+<li><strong>The environment</strong>: sandbox (e.g. <code>AP_SBX_...</code>) or production. These are different databases.</li>
+<li><strong>Read access</strong> for whatever role runs the checks.</li>
+</ul>
+<p>In SQL, the path is simply what goes after <code>FROM</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w">                                   </span><span class="k">as</span><span class="w"> </span><span class="k">row_count</span><span class="p">,</span>
+<span class="w">       </span><span class="n">count_if</span><span class="p">(</span><span class="n">avg_ticket</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">null</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w">    </span><span class="k">as</span><span class="w"> </span><span class="n">pct_missing</span>
+<span class="k">from</span><span class="w">   </span><span class="o">&lt;</span><span class="k">DATABASE</span><span class="o">&gt;</span><span class="p">.</span><span class="o">&lt;</span><span class="k">SCHEMA</span><span class="o">&gt;</span><span class="p">.</span><span class="o">&lt;</span><span class="k">TABLE</span><span class="o">&gt;</span><span class="w">                </span><span class="c1">-- ← the Snowflake Path</span>
+<span class="k">where</span><span class="w">  </span><span class="o">&lt;</span><span class="n">event_ts</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">dateadd</span><span class="p">(</span><span class="n">hour</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">current_timestamp</span><span class="p">());</span>
+</code></pre></div>
+<p>In the <a href="../implementation/#config-table-dq_check_definitions">implementation guide</a> it is stored in the
+<code>source_table</code> and <code>benchmark_table</code> columns of the config table.</p>
+<h2 id="the-check-types">The check types<a class="headerlink" href="#the-check-types" title="Permanent link">&para;</a></h2>
+<p>The spreadsheet offers nine check types in a dropdown. The BRD does not define them, so the definitions
+below are <strong>(inferred)</strong>. Each one should be confirmed and written into the BRD itself (see
+<a href="../review-notes/#2-define-every-check-type-precisely">Review notes</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Check type</th>
+<th>What it asks</th>
+<th>Typical criteria</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Missing Values</strong></td>
+<td>What share of records have this field <strong>null</strong>?</td>
+<td>FAIL if missing <strong>&gt; X%</strong></td>
+<td><code>Avg Ticket</code> null in &gt; 30% of records</td>
+</tr>
+<tr>
+<td><strong>Field Population</strong></td>
+<td>What share of records have a <strong>real, usable</strong> value (not null, not blank, not a placeholder)?</td>
+<td>FAIL if populated <strong>&lt; X%</strong></td>
+<td><code>Enquiry Date</code> usable in &lt; 70% of records</td>
+</tr>
+<tr>
+<td><strong>Acceptable Range</strong></td>
+<td>Are numeric or date values inside the allowed bounds?</td>
+<td>FAIL if outside <code>[min, max]</code></td>
+<td><code>Avg Ticket</code> must be &gt; $0 and &lt; $10,000</td>
+</tr>
+<tr>
+<td><strong>Accepted Values</strong></td>
+<td>Is the value one of an allowed list?</td>
+<td>FAIL if not in the set</td>
+<td>Account status in <code>{01, 02, 03, 13}</code></td>
+</tr>
+<tr>
+<td><strong>Expected Format</strong></td>
+<td>Does the value match a pattern?</td>
+<td>FAIL if it doesn't match the regex/format</td>
+<td>Date is <code>YYYY-MM-DD</code>; ID is all digits</td>
+</tr>
+<tr>
+<td><strong>Duplicate Values</strong></td>
+<td>Is a value that should be unique repeated?</td>
+<td>FAIL if duplicates &gt; X</td>
+<td>The same application ID appears twice in an hour</td>
+</tr>
+<tr>
+<td><strong>Value Length</strong></td>
+<td>Is the string length as expected?</td>
+<td>FAIL if length ≠ N (or outside range)</td>
+<td>Merchant ID must be N characters</td>
+</tr>
+<tr>
+<td><strong>Value Type</strong></td>
+<td>Is the data type correct?</td>
+<td>FAIL if the type is wrong</td>
+<td>Numeric field arriving as text</td>
+</tr>
+<tr>
+<td><strong>Placeholder Value</strong></td>
+<td>Is the field filled with a "fake" default?</td>
+<td>FAIL if placeholder share &gt; X%</td>
+<td><code>-999</code>, <code>9999</code>, <code>N/A</code>, <code>UNKNOWN</code>, <code>1900-01-01</code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Placeholders hide missing data</p>
+</div>
+<p>A field filled with <code>-999</code> is not null, so a <strong>Missing Values</strong> check passes it. The data is still
+effectively missing. That is why <strong>Field Population</strong> and <strong>Placeholder Value</strong> exist alongside Missing
+Values. The <a href="../../feature-store/step2-features/">feature store</a> uses <code>-999</code> this way, so any monitoring
+of its outputs must count <code>-999</code> as "not populated".</p>
+<h2 id="the-variable-matrix-as-drafted">The variable matrix (as drafted)<a class="headerlink" href="#the-variable-matrix-as-drafted" title="Permanent link">&para;</a></h2>
+<p>The spreadsheet is a grid: <strong>one row per variable, three columns per check type</strong>:</p>
+<ul>
+<li><strong>Check?</strong> (Yes/No): whether this check applies to the variable.</li>
+<li><strong>Alert criteria</strong>: the threshold that makes it FAIL.</li>
+<li><strong>Alerts Sent?</strong> (Yes/No): whether a FAIL sends an alert, or only shows up in the report
+  <strong>(inferred)</strong>.</li>
+</ul>
+<p>What the screenshot shows so far (the <code>…</code> rows are still placeholders in the draft):</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th style="text-align: center;">Missing Values</th>
+<th style="text-align: center;">Criteria</th>
+<th style="text-align: center;">Alert?</th>
+<th style="text-align: center;">Field Population</th>
+<th style="text-align: center;">Criteria</th>
+<th style="text-align: center;">Alert?</th>
+<th style="text-align: center;">Acceptable Range</th>
+<th>Criteria</th>
+<th style="text-align: center;">Alert?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Merch ID</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&gt; 30%</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">Yes</td>
+<td><code>(&lt;=0 &gt;=15)</code></td>
+<td style="text-align: center;">Yes</td>
+</tr>
+<tr>
+<td>Enquiry Date</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&gt; 30%</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&lt; 70%</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
+<td><code>(&lt;=2025 &gt;=2026)</code></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Avg Ticket</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&gt; 30%</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&lt; 70%</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td><code>(&lt;=$0 &gt;=$10000)</code></td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td>… (4 rows)</td>
+<td style="text-align: center;">some No</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">mixed</td>
+<td style="text-align: center;">&lt; 80%</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td>Client ID</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&gt; 30%</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">&lt; 80%</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">No</td>
+<td></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="how-to-read-a-row">How to read a row<a class="headerlink" href="#how-to-read-a-row" title="Permanent link">&para;</a></h3>
+<p>Take <strong>Avg Ticket</strong>:</p>
+<ul>
+<li><strong>Missing Values: Yes, &gt; 30%, alert Yes.</strong> If more than 30% of records in the window have no
+  Avg Ticket, the check FAILs <strong>and</strong> an alert goes out.</li>
+<li><strong>Field Population: Yes, &lt; 70%, alert No.</strong> If fewer than 70% have a real value, it FAILs, but this
+  only shows up in the weekly report.</li>
+<li><strong>Acceptable Range: Yes, <code>(&lt;=$0 &gt;=$10000)</code>, alert No.</strong> Read as: a value <strong>≤ $0 or ≥ $10,000</strong> is out
+  of range. That reading is <strong>(inferred)</strong>: the notation lists the <em>failing</em> boundaries.</li>
+</ul>
+<p>Some criteria in the draft are ambiguous. For example, <code>(&lt;=0 &gt;=15)</code> on Merch ID, a range check on an ID
+field. Those are covered in <a href="../review-notes/#3-tighten-the-alert-criteria">Review notes</a>.</p>
+<h2 id="worked-example-one-hour-of-application-data">Worked example: one hour of application data<a class="headerlink" href="#worked-example-one-hour-of-application-data" title="Permanent link">&para;</a></h2>
+<p><strong>Illustrative.</strong> In one hour, 200 applications arrive. The checks configured for <strong>Avg Ticket</strong> and
+<strong>Enquiry Date</strong> run against those 200 records:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Check</th>
+<th>Measured</th>
+<th>Criteria</th>
+<th>Result</th>
+<th>Alert?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Avg Ticket</td>
+<td>Missing Values</td>
+<td>66 null of 200 = <strong>33%</strong></td>
+<td>&gt; 30%</td>
+<td><strong>FAIL</strong></td>
+<td><strong>Yes → email</strong></td>
+</tr>
+<tr>
+<td>Avg Ticket</td>
+<td>Field Population</td>
+<td>120 usable of 200 = <strong>60%</strong> (66 null + 14 <code>-999</code>)</td>
+<td>&lt; 70%</td>
+<td><strong>FAIL</strong></td>
+<td>No (report only)</td>
+</tr>
+<tr>
+<td>Avg Ticket</td>
+<td>Acceptable Range</td>
+<td>3 values ≥ $10,000</td>
+<td>≤$0 or ≥$10,000</td>
+<td><strong>FAIL</strong> (if any one value counts)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Enquiry Date</td>
+<td>Missing Values</td>
+<td>10 null of 200 = <strong>5%</strong></td>
+<td>&gt; 30%</td>
+<td>PASS</td>
+<td>(n/a)</td>
+</tr>
+<tr>
+<td>Enquiry Date</td>
+<td>Field Population</td>
+<td>190 usable of 200 = <strong>95%</strong></td>
+<td>&lt; 70%</td>
+<td>PASS</td>
+<td>(n/a)</td>
+</tr>
+</tbody>
+</table>
+<p>Two things this example shows:</p>
+<ul>
+<li><strong>Only one email goes out</strong> this hour (Avg Ticket, Missing Values), even though there are three
+  FAILs. The other two wait for the weekly report.</li>
+<li>The Acceptable Range result depends on a rule the BRD hasn't set yet: does <strong>one</strong> bad value make the
+  check FAIL, or does it take more than some percentage? With 3 out of 200 (1.5%), the answer flips
+  from FAIL to PASS depending on that rule.</li>
+</ul>
+<h2 id="what-happens-on-each-run">What happens on each run<a class="headerlink" href="#what-happens-on-each-run" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+    T["Hourly trigger"] --&gt; L["Load the last window of input data&lt;br/&gt;(Snowflake Path)"]
+    L --&gt; C["For each variable × check type&lt;br/&gt;where Check? = Yes"]
+    C --&gt; M["Compute the metric&lt;br/&gt;(e.g. % missing)"]
+    M --&gt; D{"Breaches the&lt;br/&gt;alert criteria?"}
+    D -- "No" --&gt; P["PASS"]:::ok
+    D -- "Yes" --&gt; F["FAIL"]:::bad
+    P --&gt; R[("Store result")]
+    F --&gt; R
+    F --&gt; A{"Alerts Sent? = Yes"}
+    A -- "Yes" --&gt; E["Send alert email"]:::bad
+    A -- "No" --&gt; R
+    R --&gt; W["Weekly report&lt;br/&gt;(all results)"]
+
+    classDef ok  fill:#7fc1c6,stroke:#3f8389,color:#0c2b2d;
+    classDef bad fill:#e08a7b,stroke:#a8503f,color:#2b0c08;</code></pre>
+<h2 id="coverage-gap-availability-isnt-checked-yet">Coverage gap: "availability" isn't checked yet<a class="headerlink" href="#coverage-gap-availability-isnt-checked-yet" title="Permanent link">&para;</a></h2>
+<p>Objective BO-01 asks for <strong>availability and validity</strong>. Every check type above is about <strong>validity</strong>:
+whether the values are good. None is about <strong>availability</strong>: whether the data arrived at all. If a TMX
+outage means <strong>zero</strong> TMX responses arrive in an hour, there is nothing to measure "% missing" against,
+and every check can quietly pass. <strong>(suggestion)</strong> Add two more check types:</p>
+<ul>
+<li><strong>Volume:</strong> row count in the window compared with what's expected. For example, FAIL if TMX
+  responses drop below 50% of the same hour last week.</li>
+<li><strong>Freshness:</strong> time since the newest record. For example, FAIL if no bureau data has arrived for 2
+  hours.</li>
+</ul>
+<p>Next: <a href="../feature-score-monitoring/">Feature &amp; score monitoring</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../feature-score-monitoring/" class="md-footer__link md-footer__link--next" aria-label="Next: Feature &amp; score monitoring">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Feature & score monitoring
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+        <script src="../../javascripts/mermaid-labels.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3064 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Underwriting real-time decisioning (AWS + Snowflake) and the Risk Monitoring feature store pipeline - architecture, data flow, and runbooks">
+      
+      
+      
+      
+        <link rel="prev" href="../running/">
+      
+      
+        <link rel="next" href="../../dq-aws/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>The code, module by module - UW Decisioning & Risk Monitoring</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/furo.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-code-module-by-module" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="UW Decisioning &amp; Risk Monitoring" class="md-header__button md-logo" aria-label="UW Decisioning & Risk Monitoring" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            UW Decisioning & Risk Monitoring
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              The code, module by module
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="UW Decisioning &amp; Risk Monitoring" class="md-nav__button md-logo" aria-label="UW Decisioning & Risk Monitoring" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    UW Decisioning & Risk Monitoring
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Underwriting Decisioning
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Underwriting Decisioning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upstream-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Before the config tables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-end data flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../worked-example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worked example (2 merchants)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisioning-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisioning lanes & layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../state-machine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inside the state machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../support-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support engineer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Risk Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Feature Risk Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step1-arrays/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 1: Update Arrays
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step2-features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 2: Compute Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step3-registration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 3: Registration & Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/backfill-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backfill runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring Kickoff
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Monitoring Kickoff
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/whiteboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The whiteboard, decoded
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/discussion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What was discussed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/brd-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From kickoff to BRD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Quality Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Quality Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/input-monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/feature-score-monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature & score monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/review-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review notes & open questions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    After the BRD: Next Steps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    After the BRD: Next Steps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/what-to-monitor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What to monitor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/mvp-build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building the MVP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/communications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emails, Jira & review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/check-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check-in: templates & timeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/poc-getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    POC: getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/requirements-update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements update: reconciliation & no-activity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/implementation-support-doc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Support Document (UW US V2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../next-steps/dq-framework-build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The framework: design and status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework: How It Works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework: How It Works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../end-to-end/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-end flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    One-time setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../running/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The code, module by module
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The code, module by module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The folder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-modules-depend-on-each-other" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the modules depend on each other
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entry points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handlerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        handler.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clipy-and-__main__py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cli.py and __main__.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settingspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        settings.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The run
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The run">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enginepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        engine.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workbookpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        workbook.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#planpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plan.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sql.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rulespy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rules.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expectationspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        expectations.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-and-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input and output
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input and output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#snowflakepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        snowflake.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="snowflake.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-connects-to-snowflake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it connects to Snowflake
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        explain.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alertspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        alerts.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datadocspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        datadocs.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outside-src" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outside src/
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework: Lift & Shift to AWS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework: Lift & Shift to AWS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What changes and what to ask for
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step by step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hosting the report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/operate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    After go-live
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework Blueprint
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework Blueprint
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-1-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1: Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/reference-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-2-features-scores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2: Features & scores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-3-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3: Model & rule performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations & alerting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap & governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The folder
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-modules-depend-on-each-other" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the modules depend on each other
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entry points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handlerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        handler.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clipy-and-__main__py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cli.py and __main__.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settingspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        settings.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The run
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The run">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enginepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        engine.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workbookpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        workbook.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#planpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plan.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sql.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rulespy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rules.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expectationspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        expectations.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-and-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input and output
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input and output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#snowflakepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        snowflake.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="snowflake.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-connects-to-snowflake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it connects to Snowflake
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        explain.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alertspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        alerts.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datadocspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        datadocs.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outside-src" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outside src/
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="the-code-module-by-module">The code, module by module<a class="headerlink" href="#the-code-module-by-module" title="Permanent link">&para;</a></h1>
+<h2 id="the-folder">The folder<a class="headerlink" href="#the-folder" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>dq-framework/
+├── src/dqf/                  the code: the only code that goes to AWS
+├── config/dq_config.yaml     the checks and business rules (the main configuration)
+├── config/dq_config.xlsx     the same, as Excel; config/sheets/*.csv: the same, as CSVs (generated)
+├── sql/                      Snowflake: 01_setup.sql (user, role, warehouse), 02_sample_table.sql
+├── Dockerfile                the Lambda image for AWS
+├── requirements.in / .txt    what the Lambda installs (pinned)
+├── infra/                    cloudformation.yaml (AWS and LocalStack), deploy.sh (AWS)
+├── local/docker-compose.yml  LocalStack 4.9 and a local mail inbox
+├── scripts/                  local.py (LocalStack), make_snowflake_key.sh, build_config.py
+├── app/streamlit_app.py      the report
+├── tests/                    unit tests; opt-in tests for Snowflake and LocalStack
+├── Makefile                  shortcuts: `make help`
+└── .env.example              settings template (.env is git-ignored)
+</code></pre></div>
+<p>Only <code>src/dqf/</code>, <code>config/dq_config.yaml</code> and <code>requirements.txt</code> go into the AWS image. Everything else is for
+development.</p>
+<h2 id="how-the-modules-depend-on-each-other">How the modules depend on each other<a class="headerlink" href="#how-the-modules-depend-on-each-other" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+    handler["&lt;b&gt;handler.py&lt;/b&gt;&lt;br/&gt;Lambda entry"]:::entry --&gt; engine
+    cli["&lt;b&gt;cli.py&lt;/b&gt;&lt;br/&gt;dqf command"]:::entry --&gt; engine
+    handler --&gt; settings
+    cli --&gt; settings
+    engine["&lt;b&gt;engine.py&lt;/b&gt;&lt;br/&gt;one run"]:::core --&gt; workbook["&lt;b&gt;workbook.py&lt;/b&gt;&lt;br/&gt;read YAML / Excel / CSV,&lt;br/&gt;validate"]:::core
+    engine --&gt; plan["&lt;b&gt;plan.py&lt;/b&gt;&lt;br/&gt;rows → expectations"]:::core
+    plan --&gt; sql["&lt;b&gt;sql.py&lt;/b&gt;&lt;br/&gt;queries"]:::core
+    plan --&gt; rules["&lt;b&gt;rules.py&lt;/b&gt;&lt;br/&gt;when / then rules&lt;br/&gt;→ GX expectations"]:::core
+    rules --&gt; custom["&lt;b&gt;expectations.py&lt;/b&gt;&lt;br/&gt;custom GX&lt;br/&gt;expectations"]:::core
+    engine --&gt; snowflake["&lt;b&gt;snowflake.py&lt;/b&gt;&lt;br/&gt;login, GX source,&lt;br/&gt;results table"]:::io
+    engine --&gt; explain["&lt;b&gt;explain.py&lt;/b&gt;&lt;br/&gt;words + queries"]:::out
+    engine --&gt; alerts["&lt;b&gt;alerts.py&lt;/b&gt;&lt;br/&gt;SNS, email, log"]:::out
+    engine --&gt; datadocs["&lt;b&gt;datadocs.py&lt;/b&gt;&lt;br/&gt;GX HTML report"]:::out
+    settings["&lt;b&gt;settings.py&lt;/b&gt;&lt;br/&gt;env, Secrets Manager"]:::io
+
+    classDef entry fill:#7C69B2,stroke:#57498a,color:#fff;
+    classDef core fill:#BC5618,stroke:#8a3e10,color:#fff;
+    classDef io fill:#127EA6,stroke:#0b5a78,color:#fff;
+    classDef out fill:#54802D,stroke:#3a5a1e,color:#fff;</code></pre>
+<h2 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h2>
+<h3 id="handlerpy"><code>handler.py</code><a class="headerlink" href="#handlerpy" title="Permanent link">&para;</a></h3>
+<p>The AWS Lambda entry point (<code>dqf.handler.handler</code>). EventBridge calls it with an event:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{"schedule": "hourly"}</code> / <code>{"schedule": "daily"}</code></td>
+<td>One scheduled run</td>
+</tr>
+<tr>
+<td><code>+ "window_end": "2026-10-17 10:00"</code></td>
+<td>Check the window ending then (UTC), for a manual re-run</td>
+</tr>
+<tr>
+<td><code>+ "send_alerts": false</code></td>
+<td>Store results, send nothing</td>
+</tr>
+<tr>
+<td><code>{"action": "test_alert"}</code></td>
+<td>Send a test message through the alert channels, nothing else</td>
+</tr>
+</tbody>
+</table>
+<p>It returns the run's counts (checks, passed, failed, alerts sent, report location). It keeps the engine
+between calls while the Lambda container is warm, and imports GX lazily, because GX takes seconds to
+import and Lambda allows 10 seconds for start-up.</p>
+<h3 id="clipy-and-__main__py"><code>cli.py</code> and <code>__main__.py</code><a class="headerlink" href="#clipy-and-__main__py" title="Permanent link">&para;</a></h3>
+<p>The <code>dqf</code> command (<code>python -m dqf</code> works too). It reads <code>.env</code>, then calls the same engine as the
+Lambda: <code>run</code>, <code>backfill</code>, <code>validate</code>, <code>init</code>, <code>check-connection</code>, <code>describe-table</code>, <code>test-alert</code>,
+<code>show</code>. It prints one line per check.</p>
+<h3 id="settingspy"><code>settings.py</code><a class="headerlink" href="#settingspy" title="Permanent link">&para;</a></h3>
+<p>Reads every setting from environment variables into one <code>Settings</code> object. The Snowflake login comes
+from <strong>Secrets Manager</strong> when <code>DQF_SNOWFLAKE_SECRET_ID</code> is set (AWS and LocalStack), otherwise from the
+<code>SNOWFLAKE_*</code> variables (a laptop). The rest of the code never reads the environment directly, so it
+behaves the same everywhere.</p>
+<h2 id="the-run">The run<a class="headerlink" href="#the-run" title="Permanent link">&para;</a></h2>
+<h3 id="enginepy"><code>engine.py</code><a class="headerlink" href="#enginepy" title="Permanent link">&para;</a></h3>
+<p>One run from start to finish. <code>Engine.run(schedule, end)</code>:</p>
+<ol>
+<li>Works out the window (<code>plan.windows</code>).</li>
+<li>Loads the configuration (YAML, Excel or CSV) and keeps the sources with this schedule.</li>
+<li>For each group from <code>plan.plan</code>, builds a GX <code>ExpectationSuite</code>, adds the group's query as a GX
+   <strong>query asset</strong> on the Snowflake data source, and runs <code>batch.validate(suite)</code>. A group that breaks
+   (bad SQL, missing column) marks its checks <code>ERROR</code> and the run continues.</li>
+<li>Turns GX's results into rows: <code>PASS</code>, <code>WARN</code> (PSI / CSI between the warn and fail limits), <code>FAIL</code>,
+   or <code>ERROR</code> (GX could not evaluate it). GX is told not to fetch example values
+   (<code>partial_unexpected_count: 0</code>), and any it returns are dropped. Only the counts in <code>SAFE_KEYS</code> are
+   kept.</li>
+<li>Adds a plain-language explanation and a "see the rows" query to each row (<code>explain.py</code>).</li>
+<li>Stores the rows and reads the previous run (<code>snowflake.record</code>).</li>
+<li><code>decide()</code> picks the new failures, recoveries and reminders. Only checks with <code>ALERT = Yes</code> count,
+   and <code>WARN</code> never alerts by itself.</li>
+<li>Builds the GX report (<code>datadocs.py</code>) and sends one alert (<code>alerts.py</code>) if anything changed.</li>
+</ol>
+<p><code>Engine.backfill(schedule, periods)</code> runs past windows, oldest first, without alerts. It reuses one GX
+context and one Snowflake data source.</p>
+<p>The GX context is <strong>ephemeral</strong> (in memory): no GX project folder, and the Snowflake login is never
+written to disk.</p>
+<h3 id="workbookpy"><code>workbook.py</code><a class="headerlink" href="#workbookpy" title="Permanent link">&para;</a></h3>
+<p>Reads the configuration from a path or <code>s3://</code>:
+- <strong>YAML</strong> (<code>.yaml</code>, <code>.yml</code>), the main format;
+- an <strong>Excel workbook</strong> (<code>.xlsx</code>);
+- a <strong>folder of CSVs</strong>.</p>
+<p>Every format is turned into the same rows (<code>yaml_rows()</code> for YAML, <code>_rows()</code> for sheets), and then one
+function, <code>_build()</code>, <strong>validates everything</strong> before anything runs. It reports all problems at once,
+each with where it is (<code>sources.UW_A1_INPUT.checks[3]</code>, or <code>Checks row 5</code>). Among them:
+- an unknown key, source or rule;
+- a missing limit, a bad regex or a non-numeric value;
+- a row filter or rule containing anything but reading (<code>;</code>, <code>--</code>, <code>drop</code>, <code>insert</code>, … are refused).</p>
+<p>It returns a <code>Config</code>:
+- <strong>sources</strong>, <strong>checks</strong> and <strong>stability</strong> rows, each with a stable <code>CHECK_ID</code> such as
+  <code>UW_A1_INPUT|AVG_TICKET|MISSING_VALUES</code>. Alerts use the ID to tell "still failing" from "new".
+- <strong>rules</strong>: each business rule, checked and read into a <code>rules.Rule</code> (its <code>when</code> blocks and <code>then</code>
+  parts). It also adds one check row per rule and source the rule <code>applies_to</code>, with the ID
+  <code>SOURCE||RULE_NAME</code>, so rules are planned, stored and alerted on like any other check.</p>
+<h3 id="planpy"><code>plan.py</code><a class="headerlink" href="#planpy" title="Permanent link">&para;</a></h3>
+<p>Turns configuration rows into GX expectations (<code>BUILDERS</code>: one per check type; <code>rules.build</code> for
+business rules) and <strong>groups them by the
+query they run on</strong>, so each group needs only one Snowflake query:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Query</th>
+<th>Checks in it</th>
+<th>Named in the GX report</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Window</td>
+<td>The source's rows in the window</td>
+<td>All standard checks and the business rules</td>
+<td><code>hourly.UW_A1_INPUT.checks</code></td>
+</tr>
+<tr>
+<td>Freshness</td>
+<td>Hours since the newest row of the whole table</td>
+<td><code>FRESHNESS</code></td>
+<td><code>hourly.UW_A1_INPUT.freshness</code></td>
+</tr>
+<tr>
+<td>Comparison</td>
+<td>The window joined to the other source; one 0/1 flag column per check</td>
+<td><code>SOURCE_COVERAGE</code>, <code>MATCHES_SOURCE</code>, <code>LOST_IN_MAPPING</code></td>
+<td><code>hourly.A.compared_with_B</code></td>
+</tr>
+<tr>
+<td>Stability</td>
+<td>PSI / CSI computed in SQL, one row</td>
+<td>One <code>PSI</code> or <code>CSI</code></td>
+<td><code>daily.UW_A1_DAILY.drift_MF_SCORE</code></td>
+</tr>
+</tbody>
+</table>
+<p>It also holds <code>windows()</code> (previous full hour or day), <code>criteria_text()</code> (the limit in words) and
+<code>metric_name()</code>.</p>
+<h3 id="sqlpy"><code>sql.py</code><a class="headerlink" href="#sqlpy" title="Permanent link">&para;</a></h3>
+<p>The Snowflake SQL behind the groups: <code>window_query</code>, <code>freshness_query</code>, <code>compare_query</code> and
+<code>stability_query</code> (binning at benchmark quantiles or top categories, a missing-value bin, and a small
+floor on empty bins so the logarithm is defined). Every query is <strong>read-only</strong> and starts with <code>SELECT</code>,
+as GX requires. When a period has no rows, <code>NO_ROWS</code> (999999) makes the check fail instead of passing
+silently.</p>
+<h3 id="rulespy"><code>rules.py</code><a class="headerlink" href="#rulespy" title="Permanent link">&para;</a></h3>
+<p>The rule vocabulary: the words of <code>when</code> and <code>then</code> (<code>is</code>, <code>in</code>, <code>at_least</code>, <code>between</code>, <code>present</code>,
+<code>matches</code>, <code>equals_field</code>, …).
+- <code>parse_rule()</code> reads and checks a rule. It is plain Python, so validation needs no GX.
+- <code>build()</code> turns each <code>then</code> field into a built-in GX expectation, with the <code>when</code> blocks as its
+  <strong>row condition</strong> (<code>Column("DECISION") == "AUTO_APPROVE"</code>; blocks joined with <code>&amp;</code> and <code>|</code>). A rule
+  using <code>check:</code> becomes that custom expectation.
+- <code>text()</code> writes the rule in words, for the criteria and the alert.
+- <code>breaks_sql()</code> writes the condition for the alert's "see the rows" query. GX writes the SQL that
+  actually runs.</p>
+<p>The engine (<code>engine.combine()</code>) merges the parts of a rule into one result: it fails if any part
+fails and reports the worst part. The current rules, all in <code>dq_config.yaml</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SSN_TAX_ID_MATCH_DERIVED</code></td>
+<td><code>SSN_TAX_ID_MATCH</code> follows the documented derivation (<code>1</code>, <code>0</code>, <code>Z</code>)</td>
+</tr>
+<tr>
+<td><code>SCORES_IN_RANGE</code></td>
+<td>MF, IT and CR scores are between 300 and 900</td>
+</tr>
+<tr>
+<td><code>MINIMUM_DATA_FOR_MODEL</code></td>
+<td>A model with the Experian component is used only when the bureau and BizID returned data</td>
+</tr>
+<tr>
+<td><code>DECISION_MATCHES_SCORE</code></td>
+<td>No auto-approval with a merchant fraud score below 400</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../configuration/#business-rules">Business rules</a> to add one.</p>
+<h3 id="expectationspy"><code>expectations.py</code><a class="headerlink" href="#expectationspy" title="Permanent link">&para;</a></h3>
+<p>Custom GX expectations for logic that field conditions cannot express, written by a developer and used
+by rules by name (<code>check: …</code>). Each is built the GX way: a <code>MulticolumnMapMetricProvider</code> with a
+per-row condition for SQLAlchemy (Snowflake) and pandas (tests), and a <code>MulticolumnMapExpectation</code>
+that uses it, so it gets <code>mostly</code>, percentages and row conditions for free. <code>CHECKS</code> registers each one
+with a sentence for the alerts and a condition for the "see the rows" query. Today it has one:
+<code>ssn_tax_id_match_follows_derivation</code>.</p>
+<h2 id="input-and-output">Input and output<a class="headerlink" href="#input-and-output" title="Permanent link">&para;</a></h2>
+<h3 id="snowflakepy"><code>snowflake.py</code><a class="headerlink" href="#snowflakepy" title="Permanent link">&para;</a></h3>
+<p>Everything that talks to Snowflake:</p>
+<ul>
+<li><strong>Login</strong>: key pair (the service user), password, or browser SSO (laptop only). Every session runs in
+  UTC.</li>
+<li><strong><code>add_gx_source</code></strong>: registers GX's built-in Snowflake data source (<code>context.data_sources.add_snowflake</code>)
+  with that login. GX runs all the check queries through it.</li>
+<li><strong><code>column_names_without_rows</code></strong>: GX 1.24 learns a query asset's column names by running the query
+  unchanged, which returns the window's rows. This makes it run <code>select * from (…) limit 0</code> instead:
+  the same names, no rows.</li>
+<li><strong>The results table</strong>: <code>ensure_result_table</code> creates it. <code>record</code> stores one run in one transaction: it
+  reads the previous run's statuses and when each failing check started failing, deletes any earlier
+  rows for the same window, and inserts the new rows.</li>
+<li><code>read_results</code>, <code>whoami</code>, <code>describe</code>: read-only helpers for the CLI and tests.</li>
+</ul>
+<p>It writes to no table except the results table.</p>
+<h4 id="how-it-connects-to-snowflake">How it connects to Snowflake<a class="headerlink" href="#how-it-connects-to-snowflake" title="Permanent link">&para;</a></h4>
+<p>There are two connection paths. Both use the Snowflake Python connector underneath, and each does a
+different job:</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Connection</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>The checks</strong>: every expectation, business rule and PSI / CSI</td>
+<td><strong>GX's built-in Snowflake data source</strong>, <code>context.data_sources.add_snowflake(...)</code>. GX goes through SQLAlchemy and <code>snowflake-sqlalchemy</code>, which use the connector</td>
+<td><code>add_gx_source()</code></td>
+</tr>
+<tr>
+<td><strong>The results table</strong>: create it; read the previous run; delete and insert this run</td>
+<td><strong>The Snowflake Python connector directly</strong>, <code>snowflake.connector.connect(...)</code></td>
+<td><code>connect()</code>, <code>ensure_result_table()</code>, <code>record()</code></td>
+</tr>
+<tr>
+<td><code>dqf check-connection</code>, <code>describe-table</code>, <code>show</code>, the Lambda's <code>check</code> action</td>
+<td>The connector directly</td>
+<td><code>whoami()</code>, <code>describe()</code>, <code>read_results()</code></td>
+</tr>
+<tr>
+<td>The Streamlit report</td>
+<td>The connector on a laptop; the app's own Snowpark session in Streamlit in Snowflake</td>
+<td><code>app/streamlit_app.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why two paths:</strong></p>
+<ul>
+<li><strong>The checks go through GX.</strong> That is the point of using GX: it compiles each expectation to SQL
+  that runs inside Snowflake, so only counts and measured values come back, never the rows.</li>
+<li><strong>The results go through the connector.</strong> GX validates data but does not write tables. Storing a
+  run also needs one transaction: read the previous statuses, delete any earlier rows for the
+  window, insert the new ones. That is simpler and safer with the connector.</li>
+</ul>
+<pre class="mermaid"><code>flowchart LR
+    LOGIN["&lt;b&gt;One login&lt;/b&gt;&lt;br/&gt;settings.py:&lt;br/&gt;Secrets Manager or .env"]:::cfg --&gt; GXS["&lt;b&gt;GX Snowflake data source&lt;/b&gt;&lt;br/&gt;SQLAlchemy +&lt;br/&gt;snowflake-sqlalchemy"]:::code
+    LOGIN --&gt; CONN["&lt;b&gt;snowflake.connector&lt;/b&gt;"]:::code
+    GXS -- "check queries&lt;br/&gt;(read-only)" --&gt; SF[("&lt;b&gt;Snowflake&lt;/b&gt;")]:::snow
+    CONN -- "results table&lt;br/&gt;(one transaction per run)" --&gt; SF
+
+    classDef cfg fill:#7C69B2,stroke:#57498a,color:#fff;
+    classDef code fill:#BC5618,stroke:#8a3e10,color:#fff;
+    classDef snow fill:#127EA6,stroke:#0b5a78,color:#fff;</code></pre>
+<p><strong>One login for both:</strong></p>
+<ul>
+<li><code>settings.py</code> builds a single login dictionary: from Secrets Manager when <code>DQF_SNOWFLAKE_SECRET_ID</code>
+  is set (AWS, LocalStack), otherwise from <code>.env</code>.</li>
+<li>Key pair (the <code>DQF_SVC</code> service user) is the default. Password and browser single sign-on (laptop
+  only) also work.</li>
+<li>The private key is loaded once. GX gets it as base64 text and the connector as raw bytes, because each
+  library expects a different format.</li>
+<li>Both paths set the same session options: <code>TIMEZONE = UTC</code>, and
+  <code>platform_detection_timeout_seconds = 0</code>. The second skips a cloud-metadata probe that costs about
+  2 seconds at every login.</li>
+</ul>
+<p><strong>Connections per run:</strong></p>
+<ul>
+<li><strong>The checks:</strong> the GX data source is created once per <code>Engine</code> and reused for every check group.
+  It is also reused across a backfill and across invocations while the Lambda container stays warm. Each
+  group is one query on it.</li>
+<li><strong>The results table:</strong> the connector opens one short connection to store a run, then closes it. One
+  more short connection creates the results table the first time.</li>
+</ul>
+<h3 id="explainpy"><code>explain.py</code><a class="headerlink" href="#explainpy" title="Permanent link">&para;</a></h3>
+<p>For each result, <code>explain()</code> writes a sentence a person can act on, e.g. <em>"BUREAU_INQUIRY_STATUS has a
+value other than 'CY' in 75.0% of rows (24 of 32 rows); at most 10% allowed. For a source status field
+this means the source did not return data for those applications."</em> <code>investigate_sql()</code> writes a
+Snowflake query that shows the rows (or, for drift, the two periods side by side). These go into the
+alert, not the results table.</p>
+<h3 id="alertspy"><code>alerts.py</code><a class="headerlink" href="#alertspy" title="Permanent link">&para;</a></h3>
+<p>Builds the message and sends it.</p>
+<ul>
+<li><code>subject()</code>, <code>body()</code> (plain text, for SNS and the log) and <code>body_html()</code> (for email) build the
+  message: new problems, still failing, recovered, and everything else not passing.</li>
+<li><code>report_link()</code> builds the link to the Streamlit report from <code>DQF_REPORT_URL</code>. It adds
+  <code>?schedule=…&amp;window=…</code> so the report opens on this run. A Snowsight address is linked as it is,
+  because its route after <code>#</code> would lose the parameters.</li>
+<li>Channels: <code>sns</code> (publish to the topic; SNS emails the subscribers), <code>email</code> (SMTP, HTML and text),
+  <code>log</code> (print). A channel that fails is logged and does not stop the others.</li>
+</ul>
+<h3 id="datadocspy"><code>datadocs.py</code><a class="headerlink" href="#datadocspy" title="Permanent link">&para;</a></h3>
+<p>GX's own HTML report. After each validation the engine hands the result to a second GX context that
+only stores results and renders pages. For a folder target it builds in place. For an <code>s3://</code> target
+(Lambda), GX 1.x has no S3 store, so it builds in <code>/tmp</code>: it first downloads the last 7 days of results,
+so the index shows recent history, then uploads the new pages. If the report fails, the run is not
+affected.</p>
+<h2 id="outside-src">Outside <code>src/</code><a class="headerlink" href="#outside-src" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app/streamlit_app.py</code></td>
+<td>The report on the results table. Does not import <code>dqf</code>, so it runs as one file in Streamlit in Snowflake. Opens on the run named by <code>?schedule=&amp;window=</code></td>
+</tr>
+<tr>
+<td><code>scripts/publish_report.py</code></td>
+<td><code>make report-publish</code>: uploads the app to a stage and creates or updates the Streamlit in Snowflake app <code>DQ_REPORT</code>; prints its address</td>
+</tr>
+<tr>
+<td><code>scripts/local.py</code></td>
+<td>LocalStack: build the Lambda folder, store the login in Secrets Manager, deploy the template, invoke, read SNS messages and logs. Talks only to <code>localhost:4566</code></td>
+</tr>
+<tr>
+<td><code>scripts/build_config.py</code></td>
+<td>Converts the configuration between YAML, Excel and a CSV folder (<code>make config-xlsx</code>, <code>make config-from-xlsx</code>); refuses a configuration with problems</td>
+</tr>
+<tr>
+<td><code>scripts/make_snowflake_key.sh</code></td>
+<td>The service user's key pair</td>
+</tr>
+<tr>
+<td><code>infra/cloudformation.yaml</code></td>
+<td>Every AWS resource. See <a href="../../dq-aws/#what-gets-created">What gets created</a></td>
+</tr>
+<tr>
+<td><code>infra/deploy.sh</code></td>
+<td>Build and push the image, deploy the stack, upload the configuration</td>
+</tr>
+<tr>
+<td><code>Dockerfile</code></td>
+<td>The Lambda image: AWS's Python 3.12 Lambda base, the pinned requirements, <code>dqf</code>, <code>dq_config.yaml</code> (a fallback)</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../running/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Running it">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Running it
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../dq-aws/" class="md-footer__link md-footer__link--next" aria-label="Next: What changes and what to ask for">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                What changes and what to ask for
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+        <script src="../../javascripts/mermaid-labels.js"></script>
+      
+    
+  </body>
+</html>

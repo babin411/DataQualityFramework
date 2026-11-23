@@ -1,0 +1,117 @@
+site_name: UW Decisioning & Risk Monitoring
+site_description: Underwriting real-time decisioning (AWS + Snowflake) and the Risk Monitoring feature store pipeline - architecture, data flow, and runbooks
+docs_dir: docs
+
+nav:
+  - Home: index.md
+  - Underwriting Decisioning:
+      - Before the config tables: upstream-config.md
+      - End-to-end data flow: data-flow.md
+      - Worked example (2 merchants): worked-example.md
+      - Decisioning lanes & layers: decisioning-lanes.md
+      - Inside the state machine: state-machine.md
+      - Support engineer guide: support-guide.md
+  - Feature Risk Monitoring:
+      - Overview: feature-store/index.md
+      - "Step 1: Update Arrays": feature-store/step1-arrays.md
+      - "Step 2: Compute Features": feature-store/step2-features.md
+      - "Step 3: Registration & Governance": feature-store/step3-registration.md
+      - Backfill runbook: feature-store/backfill-runbook.md
+  - Monitoring Kickoff:
+      - Overview: kickoff/index.md
+      - The whiteboard, decoded: kickoff/whiteboard.md
+      - What was discussed: kickoff/discussion.md
+      - From kickoff to BRD: kickoff/brd-mapping.md
+  - Data Quality Monitoring:
+      - Overview: data-quality/index.md
+      - Input monitoring: data-quality/input-monitoring.md
+      - Feature & score monitoring: data-quality/feature-score-monitoring.md
+      - Implementation guide: data-quality/implementation.md
+      - Review notes & open questions: data-quality/review-notes.md
+  - "After the BRD: Next Steps":
+      - Overview: next-steps/index.md
+      - What to monitor: next-steps/what-to-monitor.md
+      - Building the MVP: next-steps/mvp-build.md
+      - Emails, Jira & review: next-steps/communications.md
+      - "Check-in: templates & timeline": next-steps/check-in.md
+      - "POC: getting started": next-steps/poc-getting-started.md
+      - "Requirements update: reconciliation & no-activity": next-steps/requirements-update.md
+      - "Implementation Support Document (UW US V2)": next-steps/implementation-support-doc.md
+      - "The framework: design and status": next-steps/dq-framework-build.md
+  - "DQ Framework: How It Works":
+      - Overview: dq-guide/index.md
+      - End-to-end flow: dq-guide/end-to-end.md
+      - One-time setup: dq-guide/setup.md
+      - Configuration: dq-guide/configuration.md
+      - Running it: dq-guide/running.md
+      - The code, module by module: dq-guide/modules.md
+  - "DQ Framework: Lift & Shift to AWS":
+      - What changes and what to ask for: dq-aws/index.md
+      - Step by step: dq-aws/deploy.md
+      - Hosting the report: dq-aws/report.md
+      - After go-live: dq-aws/operate.md
+  - DQ Framework Blueprint:
+      - Overview: dq-framework/index.md
+      - Architecture: dq-framework/architecture.md
+      - "Phase 1: Input monitoring": dq-framework/phase-1-input.md
+      - Reference implementation: dq-framework/reference-implementation.md
+      - "Phase 2: Features & scores": dq-framework/phase-2-features-scores.md
+      - "Phase 3: Model & rule performance": dq-framework/phase-3-performance.md
+      - Operations & alerting: dq-framework/operations.md
+      - Roadmap & governance: dq-framework/roadmap.md
+
+theme:
+  name: material
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - stylesheets/furo.css
+
+# Load mermaid ourselves (Material uses an existing global instead of fetching its own),
+# so mermaid-labels.js can make classDef text colours readable in both colour schemes.
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+  - javascripts/mermaid-labels.js
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

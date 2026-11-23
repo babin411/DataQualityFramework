@@ -1,0 +1,283 @@
+/* =============================================================
+   Furo-inspired restyle for MkDocs Material
+   Approximates the clean, flat pip (Furo) documentation look:
+   white flat header, generous whitespace, calm blue accent,
+   narrow readable column, soft borders instead of shadows.
+   ============================================================= */
+
+/* ---------- Light mode tokens ----------
+   Scoped exactly like Material's own defaults. Material re-declares tokens such as
+   --md-typeset-a-color on <body data-md-color-scheme="default">; a :root-only override
+   loses to that, which made every link inherit the white header colour. */
+:root,
+[data-md-color-scheme="default"] {
+  /* calm Furo-style blue accent */
+  --md-accent-fg-color:            #2563eb;
+  --md-accent-fg-color--transparent: rgba(37, 99, 235, 0.10);
+  --md-typeset-a-color:            #2563eb;
+
+  /* header = flat white, dark text (primary: custom) */
+  --md-primary-fg-color:           #ffffff;
+  --md-primary-fg-color--light:    #ffffff;
+  --md-primary-fg-color--dark:     #ffffff;
+  --md-primary-bg-color:           #1a1c1e;
+  --md-primary-bg-color--light:    #5c6166;
+
+  /* neutral ink + paper */
+  --md-default-fg-color:           #1a1c1e;
+  --md-default-fg-color--light:    #5c6166;
+  --md-default-fg-color--lighter:  #8b9096;
+  --md-default-fg-color--lightest: #e7e9ec;
+  --md-default-bg-color:           #ffffff;
+
+  /* code */
+  --md-code-bg-color:              #f5f6f8;
+  --md-code-fg-color:              #24292f;
+
+  /* soft UI borders + sidebar tint */
+  --fr-border:                     #e7e9ec;
+  --fr-sidebar-bg:                 #fbfbfc;
+  --fr-content-width:              49rem;
+
+  /* footer: Material defaults to white text on black; ours is a light footer */
+  --md-footer-fg-color:            #1a1c1e;
+  --md-footer-fg-color--light:     #5c6166;
+  --md-footer-fg-color--lighter:   #6b7178;
+  --md-footer-bg-color:            #ffffff;
+  --md-footer-bg-color--dark:      #fbfbfc;
+}
+
+/* ---------- Dark mode tokens ---------- */
+[data-md-color-scheme="slate"] {
+  --md-accent-fg-color:            #68a0ff;
+  --md-accent-fg-color--transparent: rgba(104, 160, 255, 0.14);
+  --md-typeset-a-color:            #68a0ff;
+
+  --md-primary-fg-color:           #15171a;
+  --md-primary-bg-color:           #e3e6ea;
+  --md-primary-bg-color--light:    #aeb3b9;
+
+  --md-default-fg-color:           #d2d5da;
+  --md-default-fg-color--light:    #a0a5ac;
+  --md-default-fg-color--lighter:  #6f757d;
+  --md-default-fg-color--lightest: #2a2e33;
+  --md-default-bg-color:           #131417;
+
+  --md-code-bg-color:              #1c1f24;
+  --md-code-fg-color:              #d2d5da;
+
+  --fr-border:                     #2a2e33;
+  --fr-sidebar-bg:                 #16181c;
+
+  --md-footer-fg-color:            #d2d5da;
+  --md-footer-fg-color--light:     #a0a5ac;
+  --md-footer-fg-color--lighter:   #8b9096;
+  --md-footer-bg-color:            #131417;
+  --md-footer-bg-color--dark:      #16181c;
+}
+
+/* ---------- Typography ---------- */
+body,
+.md-typeset {
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+.md-typeset {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset h1 {
+  font-weight: 700;
+  font-size: 1.9rem;
+  letter-spacing: -0.01em;
+  color: var(--md-default-fg-color);
+  margin-bottom: 1rem;
+}
+
+.md-typeset h2 {
+  font-weight: 650;
+  font-size: 1.35rem;
+  letter-spacing: -0.005em;
+  margin-top: 2.2rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--fr-border);
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-top: 1.6rem;
+}
+
+/* ---------- Flat header (no color bar, no shadow) ---------- */
+.md-header {
+  color: var(--md-default-fg-color);
+  background-color: var(--md-default-bg-color);
+  box-shadow: none;
+  border-bottom: 1px solid var(--fr-border);
+}
+
+.md-header--shadow {
+  box-shadow: none;
+}
+
+.md-header__title {
+  font-weight: 650;
+}
+
+/* Search box: soft pill that fits the flat header */
+.md-search__form {
+  background-color: var(--fr-sidebar-bg);
+  border: 1px solid var(--fr-border);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+.md-search__form:hover {
+  background-color: var(--fr-sidebar-bg);
+  border-color: var(--md-default-fg-color--lighter);
+}
+
+[data-md-toggle="search"]:checked ~ .md-header .md-search__form {
+  border-color: var(--md-accent-fg-color);
+}
+
+/* ---------- Sidebars ---------- */
+.md-sidebar {
+  font-size: 0.72rem;
+}
+
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary {
+    background-color: var(--fr-sidebar-bg);
+    border-right: 1px solid var(--fr-border);
+  }
+}
+
+.md-nav__title {
+  color: var(--md-default-fg-color--light);
+  font-weight: 600;
+}
+
+.md-nav__link {
+  border-radius: 0.3rem;
+  padding: 0.18rem 0.5rem;
+  transition: background-color 90ms, color 90ms;
+}
+
+.md-nav__link:hover {
+  background-color: var(--md-accent-fg-color--transparent);
+  color: var(--md-accent-fg-color);
+}
+
+/* active page: Furo-style left accent rule */
+.md-nav__item .md-nav__link--active {
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+  background-color: var(--md-accent-fg-color--transparent);
+  box-shadow: inset 2px 0 0 var(--md-accent-fg-color);
+}
+
+/* right-hand "On this page" TOC */
+.md-nav--secondary .md-nav__title {
+  box-shadow: none;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--md-default-fg-color--lighter);
+}
+
+/* ---------- Readable content column ---------- */
+.md-grid {
+  max-width: 68rem;
+}
+
+.md-content__inner {
+  margin: 0 1.2rem 2.5rem;
+  max-width: var(--fr-content-width);
+}
+
+.md-content__inner::before {
+  height: 0.6rem;
+}
+
+/* ---------- Links ---------- */
+.md-typeset a {
+  color: var(--md-typeset-a-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+  border-bottom-color: currentColor;
+}
+
+/* ---------- Code ---------- */
+.md-typeset code {
+  border-radius: 0.3rem;
+  padding: 0.12em 0.35em;
+  font-size: 0.82em;
+  border: 1px solid var(--fr-border);
+}
+
+.md-typeset pre > code {
+  border: none;
+  padding: 0.9rem 1rem;
+}
+
+.md-typeset pre {
+  border-radius: 0.5rem;
+}
+
+.md-typeset .highlight {
+  border: 1px solid var(--fr-border);
+  border-radius: 0.5rem;
+}
+
+/* ---------- Tables ---------- */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--fr-border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+  font-size: 0.74rem;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--fr-sidebar-bg);
+  font-weight: 650;
+}
+
+/* ---------- Admonitions: flat with left accent ---------- */
+.md-typeset .admonition,
+.md-typeset details {
+  border: 1px solid var(--fr-border);
+  border-left-width: 3px;
+  border-radius: 0.4rem;
+  box-shadow: none;
+  font-size: 0.76rem;
+}
+
+/* ---------- Footer ---------- */
+.md-footer {
+  background-color: var(--md-default-bg-color);
+  color: var(--md-default-fg-color--light);
+  border-top: 1px solid var(--fr-border);
+}
+
+.md-footer-meta {
+  background-color: var(--fr-sidebar-bg);
+}
+
+.md-footer__link:hover {
+  opacity: 1;
+  color: var(--md-accent-fg-color);
+}
+
+/* ---------- Mermaid: let diagrams breathe ---------- */
+.md-typeset .mermaid {
+  margin: 1.5rem auto;
+}

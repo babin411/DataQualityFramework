@@ -1,0 +1,320 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Data quality framework. Scheduled Lambda runs Great Expectations checks on Snowflake, stores results
+  in Snowflake, and publishes alerts to SNS. The same template deploys to AWS (Target=aws, container
+  image) and to LocalStack for development (Target=localstack, code folder mounted from the machine).
+
+Parameters:
+  Target:
+    Type: String
+    AllowedValues: [aws, localstack]
+    Default: aws
+  ImageUri:
+    Type: String
+    Default: ""
+    Description: "aws: ECR image URI of the Lambda image, built from the Dockerfile."
+  LocalCodePath:
+    Type: String
+    Default: /not-used-on-aws
+    Description: "localstack: absolute path of the built code folder (build/lambda), mounted into the Lambda."
+  SnowflakeSecretArn:
+    Type: String
+    Description: Secrets Manager secret holding the Snowflake login as JSON (see README).
+  ResultTable:
+    Type: String
+    Description: Results table, DB.SCHEMA.TABLE.
+  ConfigKey:
+    Type: String
+    Default: dq_config.yaml
+    Description: Key of the configuration in the stack's bucket (.yaml, or .xlsx).
+  AlertEmail:
+    Type: String
+    Default: ""
+    Description: An email address to subscribe to the alert topic. Leave empty to subscribe later.
+  AlertChannels:
+    Type: String
+    Default: sns,log
+    Description: "Any of sns, email, log. AWS uses sns,log."
+  RemindHours:
+    Type: Number
+    Default: 24
+  ReportUrl:
+    Type: String
+    Default: ""
+    Description: The Streamlit report's address (e.g. the Streamlit in Snowflake app); every alert links to it.
+  HourlySchedule:
+    Type: String
+    Default: cron(20 * * * ? *)
+    Description: Hourly run (20 past each hour, UTC); checks the previous full hour.
+  DailySchedule:
+    Type: String
+    Default: cron(30 1 * * ? *)
+    Description: Daily run (01:30 UTC); checks the previous full day and the PSI / CSI drift.
+  SchedulesEnabled:
+    Type: String
+    AllowedValues: [ENABLED, DISABLED]
+    Default: ENABLED
+  SubnetIds:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: "aws: private subnets with a route to Snowflake. Empty = no VPC."
+  SecurityGroupIds:
+    Type: CommaDelimitedList
+    Default: ""
+  # Often required in a company AWS account; both optional.
+  PermissionsBoundaryArn:
+    Type: String
+    Default: ""
+    Description: "aws: a permissions boundary policy ARN the Lambda's role must carry, if your account requires one."
+  SecretKmsKeyArn:
+    Type: String
+    Default: ""
+    Description: "aws: the KMS key ARN the Snowflake secret is encrypted with, if not the AWS-managed key."
+  # Direct SMTP email, used only when AlertChannels includes email (local development).
+  SmtpHost:
+    Type: String
+    Default: ""
+  SmtpPort:
+    Type: String
+    Default: "587"
+  SmtpUser:
+    Type: String
+    Default: ""
+  SmtpPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+  EmailFrom:
+    Type: String
+    Default: ""
+  EmailTo:
+    Type: String
+    Default: ""
+
+Conditions:
+  OnAws: !Equals [!Ref Target, aws]
+  OnLocalStack: !Equals [!Ref Target, localstack]
+  HasEmail: !Not [!Equals [!Ref AlertEmail, ""]]
+  HasBoundary: !Not [!Equals [!Ref PermissionsBoundaryArn, ""]]
+  HasSecretKey: !Not [!Equals [!Ref SecretKmsKeyArn, ""]]
+  InVpc: !And [!Condition OnAws, !Not [!Equals [!Join ["", !Ref SubnetIds], ""]]]
+
+Resources:
+  # ---- configuration workbook ----------------------------------------------------------------------
+  ConfigBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-config-${AWS::AccountId}-${AWS::Region}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # ---- alerts ----------------------------------------------------------------------------------------
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-alerts"
+      DisplayName: Data quality alerts
+
+  AlertEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasEmail
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # LocalStack only: a queue subscribed to the topic, so local runs can show what was published.
+  AlertInbox:
+    Type: AWS::SQS::Queue
+    Condition: OnLocalStack
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-alert-inbox"
+
+  AlertInboxPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: OnLocalStack
+    Properties:
+      Queues: [!Ref AlertInbox]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: sns.amazonaws.com}
+            Action: sqs:SendMessage
+            Resource: !GetAtt AlertInbox.Arn
+            Condition:
+              ArnEquals: {aws:SourceArn: !Ref AlertTopic}
+
+  AlertInboxSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: OnLocalStack
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: sqs
+      Endpoint: !GetAtt AlertInbox.Arn
+      RawMessageDelivery: false
+
+  # ---- the Lambda ------------------------------------------------------------------------------------
+  FunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      PermissionsBoundary: !If [HasBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - !If [InVpc, !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole", !Ref AWS::NoValue]
+      Policies:
+        - PolicyName: dqf
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SnowflakeLogin
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref SnowflakeSecretArn
+              - !If
+                - HasSecretKey
+                - Sid: DecryptSnowflakeLogin
+                  Effect: Allow
+                  Action: kms:Decrypt
+                  Resource: !Ref SecretKmsKeyArn
+                - !Ref AWS::NoValue
+              - Sid: ReadConfiguration
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub "${ConfigBucket.Arn}/*"
+              - Sid: GreatExpectationsReport
+                Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:DeleteObject]
+                Resource: !Sub "${ConfigBucket.Arn}/data_docs/*"
+              - Sid: ListGreatExpectationsReport
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt ConfigBucket.Arn
+                Condition:
+                  StringLike: {s3:prefix: ["data_docs/*"]}
+              - Sid: SendAlerts
+                Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref AlertTopic
+
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-run"
+      Description: Data quality checks (Great Expectations on Snowflake)
+      Role: !GetAtt FunctionRole.Arn
+      PackageType: !If [OnAws, Image, Zip]
+      Runtime: !If [OnAws, !Ref AWS::NoValue, python3.12]
+      Handler: !If [OnAws, !Ref AWS::NoValue, dqf.handler.handler]
+      Code: !If
+        - OnAws
+        - ImageUri: !Ref ImageUri
+        - S3Bucket: hot-reload               # LocalStack: mount LocalCodePath instead of uploading a zip
+          S3Key: !Ref LocalCodePath
+      Architectures: [x86_64]
+      MemorySize: 2048
+      Timeout: 600
+      Environment:
+        Variables:
+          DQF_SNOWFLAKE_SECRET_ID: !Ref SnowflakeSecretArn
+          DQF_CONFIG_URI: !Sub "s3://${ConfigBucket}/${ConfigKey}"
+          DQF_RESULT_TABLE: !Ref ResultTable
+          DQF_ALERT_CHANNELS: !Ref AlertChannels
+          DQF_SNS_TOPIC_ARN: !Ref AlertTopic
+          DQF_REMIND_HOURS: !Ref RemindHours
+          DQF_DATA_DOCS: !Sub "s3://${ConfigBucket}/data_docs"
+          DQF_REPORT_URL: !Ref ReportUrl
+          DQF_SMTP_HOST: !Ref SmtpHost
+          DQF_SMTP_PORT: !Ref SmtpPort
+          DQF_SMTP_USER: !Ref SmtpUser
+          DQF_SMTP_PASSWORD: !Ref SmtpPassword
+          DQF_EMAIL_FROM: !Ref EmailFrom
+          DQF_EMAIL_TO: !Ref EmailTo
+      VpcConfig: !If
+        - InVpc
+        - SubnetIds: !Ref SubnetIds
+          SecurityGroupIds: !Ref SecurityGroupIds
+        - !Ref AWS::NoValue
+
+  # ---- schedules -------------------------------------------------------------------------------------
+  HourlyRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Hourly data quality run (the previous full hour)
+      ScheduleExpression: !Ref HourlySchedule
+      State: !Ref SchedulesEnabled
+      Targets:
+        - Id: dqf-hourly
+          Arn: !GetAtt Function.Arn
+          Input: '{"schedule": "hourly"}'
+
+  DailyRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Daily data quality run (the previous full day, and PSI / CSI drift)
+      ScheduleExpression: !Ref DailySchedule
+      State: !Ref SchedulesEnabled
+      Targets:
+        - Id: dqf-daily
+          Arn: !GetAtt Function.Arn
+          Input: '{"schedule": "daily"}'
+
+  HourlyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HourlyRule.Arn
+
+  DailyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref Function
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyRule.Arn
+
+  # A run that breaks (as opposed to a check that fails) alerts through the same topic. AWS only.
+  RunErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: OnAws
+    Properties:
+      AlarmDescription: The data quality Lambda raised an error
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref Function
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+Outputs:
+  FunctionName:
+    Value: !Ref Function
+  ConfigBucketName:
+    Value: !Ref ConfigBucket
+  DataDocsIndex:
+    Description: Great Expectations' HTML report (download the data_docs/site folder to view it)
+    Value: !Sub "s3://${ConfigBucket}/data_docs/site/index.html"
+  AlertTopicArn:
+    Value: !Ref AlertTopic
+  AlertInboxUrl:
+    Condition: OnLocalStack
+    Value: !Ref AlertInbox

@@ -1,0 +1,4 @@
+SOURCE,TABLE,TS_COLUMN,SCHEDULE,ROW_FILTER,DESCRIPTION
+UW_A1_INPUT,DQF_DB.DQF.UW_A1_RECORD,REQUEST_TS,hourly,,"Underwriting A1 record: every application, as it arrives"
+UW_A1_SCORED,DQF_DB.DQF.UW_A1_RECORD,REQUEST_TS,hourly,EXCLUSION_REASON is null,Underwriting A1 record: applications the models scored (excludes additional outlets and WISO)
+UW_A1_DAILY,DQF_DB.DQF.UW_A1_RECORD,REQUEST_TS,daily,EXCLUSION_REASON is null,"Underwriting A1 record, by day: volume, and drift of features and scores against the benchmark"

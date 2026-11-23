@@ -1,0 +1,3392 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Underwriting real-time decisioning (AWS + Snowflake) and the Risk Monitoring feature store pipeline - architecture, data flow, and runbooks">
+      
+      
+      
+      
+        <link rel="prev" href="../requirements-update/">
+      
+      
+        <link rel="next" href="../dq-framework-build/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Implementation Support Document (UW US V2) - UW Decisioning & Risk Monitoring</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/furo.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#implementation-support-document-uw-us-v2" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="UW Decisioning &amp; Risk Monitoring" class="md-header__button md-logo" aria-label="UW Decisioning & Risk Monitoring" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            UW Decisioning & Risk Monitoring
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Implementation Support Document (UW US V2)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="UW Decisioning &amp; Risk Monitoring" class="md-nav__button md-logo" aria-label="UW Decisioning & Risk Monitoring" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    UW Decisioning & Risk Monitoring
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Underwriting Decisioning
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Underwriting Decisioning
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upstream-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Before the config tables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-end data flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../worked-example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worked example (2 merchants)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../decisioning-lanes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisioning lanes & layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../state-machine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inside the state machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../support-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support engineer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature Risk Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Feature Risk Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step1-arrays/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 1: Update Arrays
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step2-features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 2: Compute Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/step3-registration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step 3: Registration & Governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../feature-store/backfill-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backfill runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring Kickoff
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Monitoring Kickoff
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/whiteboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The whiteboard, decoded
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/discussion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What was discussed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../kickoff/brd-mapping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From kickoff to BRD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Quality Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Quality Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/input-monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/feature-score-monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature & score monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-quality/review-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Review notes & open questions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    After the BRD: Next Steps
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    After the BRD: Next Steps
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-to-monitor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What to monitor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mvp-build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building the MVP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../communications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Emails, Jira & review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../check-in/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Check-in: templates & timeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../poc-getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    POC: getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../requirements-update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements update: reconciliation & no-activity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Support Document (UW US V2)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Support Document (UW US V2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In one paragraph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-document-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The document at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-business-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The business workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-process-flow-section-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The process flow (section 0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-data-sources-section-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data sources (section 0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-and-output-records-section-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input and output records (section 1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input and output records (section 1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#day-1-the-a1-input-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 1: the A1 input record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#day-1-the-a1-output-record-and-the-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 1: the A1 output record and the display
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#day-2-the-full-input-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 2: the full input record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-mapping-spreadsheets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The mapping spreadsheets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-models-section-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The models (section 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The models (section 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#who-is-scored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who is scored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#segmentation-components-and-score-of-scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Segmentation, components and score of scores
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibration-and-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibration and alignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-and-release-sections-4-onwards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing and release (sections 4 onwards)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-means-for-data-quality-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it means for data quality monitoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions-this-raises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions this raises
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dq-framework-build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The framework: design and status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework: How It Works
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework: How It Works
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/end-to-end/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    End-to-end flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    One-time setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/running/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-guide/modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The code, module by module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework: Lift & Shift to AWS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework: Lift & Shift to AWS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What changes and what to ask for
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Step by step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hosting the report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-aws/operate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    After go-live
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DQ Framework Blueprint
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    DQ Framework Blueprint
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-1-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 1: Input monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/reference-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-2-features-scores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 2: Features & scores
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/phase-3-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase 3: Model & rule performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations & alerting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dq-framework/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap & governance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In one paragraph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-document-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The document at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-business-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The business workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-process-flow-section-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The process flow (section 0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-data-sources-section-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The data sources (section 0)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-and-output-records-section-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input and output records (section 1)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Input and output records (section 1)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#day-1-the-a1-input-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 1: the A1 input record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#day-1-the-a1-output-record-and-the-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 1: the A1 output record and the display
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#day-2-the-full-input-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Day 2: the full input record
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-mapping-spreadsheets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The mapping spreadsheets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-models-section-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The models (section 2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The models (section 2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#who-is-scored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who is scored
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#segmentation-components-and-score-of-scores" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Segmentation, components and score of scores
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calibration-and-alignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calibration and alignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-and-release-sections-4-onwards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing and release (sections 4 onwards)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-means-for-data-quality-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it means for data quality monitoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#questions-this-raises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questions this raises
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="implementation-support-document-uw-us-v2">Implementation Support Document: UW US V2<a class="headerlink" href="#implementation-support-document-uw-us-v2" title="Permanent link">&para;</a></h1>
+<p>The <strong>Model Implementation Support Document</strong> for the Underwriting US V2 release, the two field
+<strong>mapping spreadsheets</strong> it links to, and the <strong>Merchant Underwriting Workflow</strong> slide describe the new
+models end to end: where the data comes from, what the model service does with it, what it returns,
+and how the release must be tested and signed off.</p>
+<p>This page summarises them and draws out what they mean for data quality monitoring.</p>
+<div class="admonition info">
+<p class="admonition-title">Source and labels</p>
+<p>Based on photos of the documents (a draft dated 9-7-2026, 28 pages, marked <em>Fiserv Restricted</em>)
+and of the spreadsheets and slide. Some sections are still templates with placeholders. Anything
+worked out rather than stated is marked <strong>(inferred)</strong>. Keep this site internal.</p>
+</div>
+<h2 id="in-one-paragraph">In one paragraph<a class="headerlink" href="#in-one-paragraph" title="Permanent link">&para;</a></h2>
+<p>Version 2.0 releases three model suites (<strong>Merchant Fraud</strong>, <strong>Identity Theft</strong>, <strong>Credit Risk</strong>) and
+a new framework on <strong>AWS and Snowflake</strong>. MRD collects the application and every third-party and
+internal source, then calls the model service. The model service checks eligibility, builds
+features, scores <strong>component models</strong> per data source, combines them into <strong>score-of-scores</strong> models,
+calibrates to a <strong>300–900</strong> score, generates reason codes, applies the rules and returns a decision.
+<strong>Day 1 (15 October 2026)</strong> runs on the existing <strong>A1</strong> record with <strong>56 added input fields</strong> and
+<strong>11 new output fields</strong>; <strong>Day 2 (January 2027)</strong> moves to the <strong>A2</strong> record carrying the full
+response from each source. The document ends with testing and release sign-off requirements, which
+include <strong>monitoring and alerting being operational</strong>.</p>
+<h2 id="the-document-at-a-glance">The document at a glance<a class="headerlink" href="#the-document-at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Title</td>
+<td>Model Implementation Support Document: production implementation specifications, code exhibits, testing evidence, and release support</td>
+</tr>
+<tr>
+<td>Solution / program</td>
+<td>Underwriting US Models and Framework</td>
+</tr>
+<tr>
+<td>Model release</td>
+<td>Version 2.0: models (Merchant Fraud, Identity Theft, Credit Risk). Version 2.0: framework</td>
+</tr>
+<tr>
+<td>Target platform</td>
+<td>AWS and Snowflake</td>
+</tr>
+<tr>
+<td>Document owner</td>
+<td><strong>Srayasee Chakraborty</strong></td>
+</tr>
+<tr>
+<td>Technical owner</td>
+<td><strong>Ameya Jadhavar</strong></td>
+</tr>
+<tr>
+<td>Status</td>
+<td>Draft, 9-7-2026</td>
+</tr>
+<tr>
+<td>Approval references</td>
+<td>Model validation, change ticket, release approval (placeholders)</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>What it covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0. Tech dependencies</td>
+<td>The 10-step process flow and the data sources MRD collects</td>
+</tr>
+<tr>
+<td>1. API call: scoring trigger</td>
+<td>The A1 and A2 input and output records, the Day 1 and Day 2 timeline, the mapping spreadsheets</td>
+</tr>
+<tr>
+<td>2. Model information</td>
+<td>Eligibility and exclusions, features, segmentation, component models, score of scores, calibration</td>
+</tr>
+<tr>
+<td>3. Codes and platform lists</td>
+<td>Legacy-to-new code mapping (template) and the platform lists workbook</td>
+</tr>
+<tr>
+<td>4. Testing</td>
+<td>Integration test cases, a 10,000-record statistical dataset, non-functional requirements</td>
+</tr>
+<tr>
+<td>Artifact register, release readiness</td>
+<td>What must exist before release, and who signs off</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-business-workflow">The business workflow<a class="headerlink" href="#the-business-workflow" title="Permanent link">&para;</a></h2>
+<p>The slide shows the whole merchant underwriting journey. The model service is the <strong>Decision
+Engine</strong> box.</p>
+<pre class="mermaid"><code>flowchart LR
+    M["&lt;b&gt;1. Merchant&lt;/b&gt;&lt;br/&gt;applies"] --&gt; APP["&lt;b&gt;Merchant application&lt;/b&gt;&lt;br/&gt;Fiserv Merchant Onboarding"]
+    BOARD["&lt;b&gt;Checks at boarding&lt;/b&gt;&lt;br/&gt;Early Warning: bank account&lt;br/&gt;SOVOS: IRS TIN validation&lt;br/&gt;LexisNexis: SSN validation"]:::src -. "real-time&lt;br/&gt;validation" .-&gt; APP
+    APP -- "2" --&gt; ENR["&lt;b&gt;3. Data enrichment&lt;/b&gt;&lt;br/&gt;API calls, in Diligence"]:::mrd
+    EXT["&lt;b&gt;External sources&lt;/b&gt;&lt;br/&gt;Experian: bureau, Fraud Shield, BIZID&lt;br/&gt;LexisNexis: identity, ThreatMetrix, Emailage&lt;br/&gt;Neustar: phone&lt;br/&gt;Early Warning: bank account&lt;br/&gt;Dun &amp; Bradstreet: business&lt;br/&gt;Mastercard MATCH"]:::src --&gt; ENR
+    INT["&lt;b&gt;Fiserv internal&lt;/b&gt;&lt;br/&gt;GNF: negative history&lt;br/&gt;RNF: restricted names"]:::src --&gt; ENR
+    ENR -- "4. application + external&lt;br/&gt;+ internal data" --&gt; DE["&lt;b&gt;Decision engine&lt;/b&gt;&lt;br/&gt;models + rules"]:::svc
+    DE --&gt; AA["Auto approve"]:::ok
+    DE --&gt; MR["Manual review"]:::man
+    DE --&gt; AD["Auto decline"]:::bad
+    AA --&gt; RES["Approved / declined"]
+    MR --&gt; RES
+    AD --&gt; RES
+    RES -- "5, 6" --&gt; M
+
+    classDef src fill:#7C69B2,stroke:#57498a,color:#fff;
+    classDef mrd fill:#8a6d1c,stroke:#5e4a12,color:#fff;
+    classDef svc fill:#BC5618,stroke:#8a3e10,color:#fff;
+    classDef ok fill:#54802D,stroke:#3a5a1e,color:#fff;
+    classDef man fill:#127EA6,stroke:#0b5a78,color:#fff;
+    classDef bad fill:#a8503f,stroke:#7a3527,color:#fff;</code></pre>
+<p>The slide calls the enrichment stage "Data Enrichment and Auto-decisioning in <strong>Diligence</strong>". The
+implementation document says <strong>MRD</strong> collects all the sources. They are most likely the same stage
+<strong>(inferred)</strong>: MRD is the system that runs the enrichment and calls the model service.</p>
+<h2 id="the-process-flow-section-0">The process flow (section 0)<a class="headerlink" href="#the-process-flow-section-0" title="Permanent link">&para;</a></h2>
+<p>Ten steps, from the scoring trigger to the response on screen.</p>
+<pre class="mermaid"><code>flowchart TB
+    S1["&lt;b&gt;1. Data collection&lt;/b&gt;&lt;br/&gt;MRD"]:::mrd --&gt; S2["&lt;b&gt;2. Scoring trigger&lt;/b&gt;&lt;br/&gt;MRD sends the API request"]:::mrd
+    S2 --&gt; S3["&lt;b&gt;3. Scoring eligibility&lt;/b&gt;&lt;br/&gt;exclusion status"]:::svc
+    S3 --&gt; S4["&lt;b&gt;4. Feature engineering&lt;/b&gt;&lt;br/&gt;model-ready feature vector"]:::svc
+    S4 --&gt; S5["&lt;b&gt;5. Scoring and calibration&lt;/b&gt;&lt;br/&gt;component and combined scores"]:::svc
+    S5 --&gt; S6["&lt;b&gt;6. Reason codes&lt;/b&gt;&lt;br/&gt;ranked"]:::svc
+    S6 --&gt; S7["&lt;b&gt;7. Rules, prioritisation, decision&lt;/b&gt;&lt;br/&gt;final action and codes"]:::svc
+    S7 --&gt; S8["&lt;b&gt;8. Limit setting&lt;/b&gt;"]:::svc
+    S8 --&gt; S9["&lt;b&gt;9. Output&lt;/b&gt;&lt;br/&gt;API response"]:::svc
+    S9 --&gt; S10["&lt;b&gt;10. Response receipt and display&lt;/b&gt;&lt;br/&gt;MRD"]:::mrd
+
+    classDef mrd fill:#8a6d1c,stroke:#5e4a12,color:#fff;
+    classDef svc fill:#BC5618,stroke:#8a3e10,color:#fff;</code></pre>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Stage</th>
+<th>Input</th>
+<th>Output</th>
+<th>Owner</th>
+<th>On failure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Data collection</td>
+<td></td>
+<td></td>
+<td>MRD</td>
+<td>See the MRD strategy</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Scoring trigger</td>
+<td>API request</td>
+<td></td>
+<td>MRD</td>
+<td>Retry</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Population scoring eligibility</td>
+<td>A2 record</td>
+<td>Exclusion status</td>
+<td>Model service</td>
+<td>Route to DR, retry</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Feature engineering</td>
+<td>A2 record</td>
+<td>Model-ready feature vector</td>
+<td>Model service</td>
+<td>Route to DR, retry</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Model scoring and calibration</td>
+<td>A2 record</td>
+<td>Component and combined scores</td>
+<td>Model service</td>
+<td>Route to DR, retry</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Reason codes</td>
+<td>A2 record</td>
+<td>Ranked reason codes</td>
+<td>Model service</td>
+<td>Route to DR, retry</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Rules, prioritisation, decision</td>
+<td>A2 record</td>
+<td>Final action and codes</td>
+<td>Model service</td>
+<td>Route to DR, retry</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Limit setting</td>
+<td>A2 record</td>
+<td></td>
+<td>Model service</td>
+<td>Route to DR, retry</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Output</td>
+<td>A2 record</td>
+<td>API response</td>
+<td>Model service</td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td>Response receipt and display</td>
+<td>A2 output</td>
+<td>API response</td>
+<td>MRD</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>"Route to DR" most likely means failing over to the disaster-recovery deployment <strong>(inferred)</strong>.
+Steps 3 to 8 are the Step Functions flow already documented in
+<a href="../../state-machine/">Inside the state machine</a>.</p>
+<h2 id="the-data-sources-section-0">The data sources (section 0)<a class="headerlink" href="#the-data-sources-section-0" title="Permanent link">&para;</a></h2>
+<p>MRD calls and collects every source. Full responses are to be linked from Confluence (not yet filled
+in).</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Onboarding system</strong></td>
+<td>Application data</td>
+<td>All channels</td>
+</tr>
+<tr>
+<td></td>
+<td>TINCheck</td>
+<td>All channels</td>
+</tr>
+<tr>
+<td><strong>Fiserv internal</strong></td>
+<td>GNF: Global Negative File</td>
+<td>Negative history on merchant accounts</td>
+</tr>
+<tr>
+<td></td>
+<td>RNF: Restricted Name File</td>
+<td>Restricted names and phrases</td>
+</tr>
+<tr>
+<td></td>
+<td>Mastercard MATCH (TMF)</td>
+<td>Collected by MRD, all channels</td>
+</tr>
+<tr>
+<td><strong>Third party</strong></td>
+<td>LexisNexis: base record, Emailage, ThreatMetrix</td>
+<td>ThreatMetrix only for the merchant's device; no device, no ThreatMetrix request</td>
+</tr>
+<tr>
+<td></td>
+<td>Neustar</td>
+<td>Phone verification</td>
+</tr>
+<tr>
+<td></td>
+<td>Experian: bureau data</td>
+<td><strong>To be replaced by Equifax</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>Experian: BIZ ID</td>
+<td>Business identity verification</td>
+</tr>
+</tbody>
+</table>
+<p>A "Glo" source appears in the table with no system or channel yet.</p>
+<h2 id="input-and-output-records-section-1">Input and output records (section 1)<a class="headerlink" href="#input-and-output-records-section-1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Record</th>
+<th>Where</th>
+<th>When</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A1 output</strong></td>
+<td>API output to MRD</td>
+<td><strong>Day 1: 15 Oct 2026</strong></td>
+<td>Includes 11 new fields</td>
+</tr>
+<tr>
+<td><strong>A1 output</strong></td>
+<td><strong>Snowflake table</strong></td>
+<td><strong>Day 1: 15 Oct 2026</strong></td>
+<td>Includes 11 new fields</td>
+</tr>
+<tr>
+<td><strong>Full response</strong></td>
+<td><strong>Snowflake table</strong></td>
+<td><strong>Day 1</strong></td>
+<td></td>
+</tr>
+<tr>
+<td>A2 output</td>
+<td>API output to MRD</td>
+<td>Day 2: Jan 2027</td>
+<td></td>
+</tr>
+<tr>
+<td>A2 output</td>
+<td>Snowflake table</td>
+<td>Day 2: Jan 2027</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="day-1-the-a1-input-record">Day 1: the A1 input record<a class="headerlink" href="#day-1-the-a1-input-record" title="Permanent link">&para;</a></h3>
+<p>To make Day 1 easier to deploy, the new models use the existing <strong>A1</strong> input record, with <strong>56
+fields added</strong>. They are listed in <strong><code>AWS_US_INPUT_MAPPING_NEW_UW_MODEL_DEVELOPMENT_V6.xlsx</code></strong>, tab
+<em>Main</em>, rows 377–432.</p>
+<p>One field is derived: <strong><code>SSN_TAX_ID_MATCH</code></strong>, from the first principal's application data.</p>
+<table>
+<thead>
+<tr>
+<th>SSN</th>
+<th>Tax ID</th>
+<th><code>SSN_TAX_ID_MATCH</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Present</td>
+<td>Present, identical</td>
+<td><code>"1"</code></td>
+</tr>
+<tr>
+<td>Present</td>
+<td>Present, different</td>
+<td><code>"0"</code></td>
+</tr>
+<tr>
+<td>Missing</td>
+<td>or missing</td>
+<td><code>"Z"</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="day-1-the-a1-output-record-and-the-display">Day 1: the A1 output record and the display<a class="headerlink" href="#day-1-the-a1-output-record-and-the-display" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Output fields: <strong><code>AWS_US_OUTPUT_MAPPING_NEW_UW_MODEL_DEVELOPMENT_V1.xlsx</code></strong>.</li>
+<li>An extra display of <strong>auto-approval reason codes and actions</strong>, one line per control group:
+  <em>Policy and Business</em>, <em>AML (KYC principal)</em>, <em>AML (KYC secondary)</em>, <em>AML (KYB)</em>, with "Passed" or
+  "Not passed" and the negative reasons (for example <code>22A</code> LexisNexis consumer verification,
+  <code>32A</code> Neustar phone not linked to the business, <code>33A</code> EWS bank account not verified). On Day 1 the
+  codes alone, without descriptions, are enough.</li>
+<li>Client routing: <strong><code>US_UW_Model_Routing.xlsx</code></strong>.</li>
+</ul>
+<h3 id="day-2-the-full-input-record">Day 2: the full input record<a class="headerlink" href="#day-2-the-full-input-record" title="Permanent link">&para;</a></h3>
+<p>The API call will carry the <strong>full payload response from each source plus a header record</strong>. The
+layout is in <strong><code>New Model Service Output Structure V0.1.xlsx</code></strong> (Decision Science SharePoint, <em>Data
+Layouts and Dictionaries</em>).</p>
+<h3 id="the-mapping-spreadsheets">The mapping spreadsheets<a class="headerlink" href="#the-mapping-spreadsheets" title="Permanent link">&para;</a></h3>
+<p><strong>Input mapping</strong> (<code>AWS_US_INPUT_MAPPING_NEW_UW_MODEL_DEVELOPMENT</code>, tabs <em>Main</em> and <em>Audit Log</em>): one
+row per model field, with where its value comes from.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>SAS / model field name</th>
+<th>Source</th>
+<th>Raw field name</th>
+<th>Raw file / path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>addrmatchflag</code></td>
+<td>LexisNexis BIID2.0</td>
+<td><code>CLN_ADDR_MATCH_FLAG</code></td>
+<td>LN CBSUM</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>cnamematchflag</code></td>
+<td>LexisNexis BIID2.0</td>
+<td><code>CLN_COMPANY_NAME_MATCH_FLAG</code></td>
+<td>LN CBSUM</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>feinmatchflag</code></td>
+<td>LexisNexis BIID2.0</td>
+<td><code>CLN_FEIN_MATCH_FLAG</code></td>
+<td>LN CBSUM</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>residential_bus_indicator</code></td>
+<td>LexisNexis BIID2.0</td>
+<td><code>CLN_residential_bus_indicator</code></td>
+<td>LNSUM</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Output mapping</strong> (<code>AWS_US_OUTPUT_MAPPING_NEW_UW_MODEL_DEVELOPMENT</code>, tab <em>consolidated vars</em>): one row
+per output field, with its usage (storage, display), its type, and a description. For example
+<code>RULE_REASONS_SUMMARY</code> and <code>RULE_REASONS_NEG_G0</code> to <code>G9</code>, the negative reasons per control group:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G0</td>
+<td>Policy and business</td>
+</tr>
+<tr>
+<td>G1</td>
+<td>AML (KYC principal)</td>
+</tr>
+<tr>
+<td>G2</td>
+<td>AML (KYC secondary principals)</td>
+</tr>
+<tr>
+<td>G3</td>
+<td>AML (KYB)</td>
+</tr>
+<tr>
+<td>G4</td>
+<td>Negative and restricted: GNF</td>
+</tr>
+<tr>
+<td>G5</td>
+<td>Negative and restricted: other</td>
+</tr>
+<tr>
+<td>G6</td>
+<td>Identity theft</td>
+</tr>
+<tr>
+<td>G7</td>
+<td>Fraud</td>
+</tr>
+<tr>
+<td>G8</td>
+<td>Credit</td>
+</tr>
+<tr>
+<td>G9</td>
+<td>Bespoke for SMS / banking partners</td>
+</tr>
+</tbody>
+</table>
+<p>The output column is headed "Actimize Derived Field Name". Actimize is presumably the platform these
+fields were first derived in <strong>(inferred)</strong>.</p>
+<h2 id="the-models-section-2">The models (section 2)<a class="headerlink" href="#the-models-section-2" title="Permanent link">&para;</a></h2>
+<h3 id="who-is-scored">Who is scored<a class="headerlink" href="#who-is-scored" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Excluded:</strong> additional outlets, and WISO. The A1 model is not called for them; a separate
+  framework decides them. On Day 2 the team may move all auto-decisions into the A1 framework.</li>
+<li>The score choices are configurable.</li>
+</ul>
+<h3 id="segmentation-components-and-score-of-scores">Segmentation, components and score of scores<a class="headerlink" href="#segmentation-components-and-score-of-scores" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>No segmentation:</strong> one model per suite (Merchant Fraud, Identity Theft, Credit Risk).</li>
+<li><strong>Component models</strong> (<code>CS_…</code>) score one data source each, but only when that source has enough data:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Minimum data needed to score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Application and GNF</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Experian and BizID</td>
+<td>bureau inquiry status = <code>CY</code> <strong>and</strong> BizID inquiry status = <code>CY</code></td>
+</tr>
+<tr>
+<td>LexisNexis / Neustar</td>
+<td>CLN inquiry status = <code>CY</code> <strong>and</strong> NEU inquiry status = <code>CY</code></td>
+</tr>
+<tr>
+<td>ThreatMetrix</td>
+<td>request ID present and not <code>ZZ</code>, <strong>and</strong> request result = <code>success</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Score-of-scores models</strong> (<code>SS_…</code>) combine the component scores that are available. Component scores
+  are calibrated before they are combined.</li>
+</ul>
+<pre class="mermaid"><code>flowchart LR
+    C100["CS_MF_100&lt;br/&gt;application +&lt;br/&gt;negative files"]:::c --&gt; S100["&lt;b&gt;SS_MF_100&lt;/b&gt;"]:::s
+    C101["CS_MF_101&lt;br/&gt;Experian + BizID"]:::c --&gt; S100
+    C100 --&gt; S101["&lt;b&gt;SS_MF_101&lt;/b&gt;"]:::s
+    C101 --&gt; S101
+    C103["CS_MF_103&lt;br/&gt;LexisNexis"]:::c --&gt; S101
+    S100 -. "the model used depends on&lt;br/&gt;which sources have data" .-&gt; OUT["Merchant fraud score"]
+    S101 -.-&gt; OUT
+
+    classDef c fill:#127EA6,stroke:#0b5a78,color:#fff;
+    classDef s fill:#BC5618,stroke:#8a3e10,color:#fff;</code></pre>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Purpose</th>
+<th>Artifact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CS_MF_100</code></td>
+<td>Merchant fraud: application and negative files</td>
+<td>Non-prod S3 (<code>us-uw-models</code>)</td>
+</tr>
+<tr>
+<td><code>CS_MF_101</code></td>
+<td>Merchant fraud: Experian and BizID</td>
+<td>Non-prod S3</td>
+</tr>
+<tr>
+<td><code>CS_MF_102</code></td>
+<td>Merchant fraud: Equifax</td>
+<td>To be built</td>
+</tr>
+<tr>
+<td><code>CS_MF_103</code></td>
+<td>Merchant fraud (LexisNexis, <strong>inferred</strong> from the score-of-scores inputs)</td>
+<td>Non-prod S3</td>
+</tr>
+<tr>
+<td><code>CS_CR_104</code></td>
+<td>Credit risk: Equifax with VantageScore</td>
+<td>To be built</td>
+</tr>
+</tbody>
+</table>
+<p>The Identity Theft suite follows the same pattern (<code>SS_IT_100</code> to <code>SS_IT_105</code>, from <code>CS_IT_100</code> to
+<code>CS_IT_104</code>, with ThreatMetrix and Equifax combinations). Score-of-scores models <strong>with Equifax FICO or
+VantageScore</strong> still have to be added for all three suites.</p>
+<p>This is the logic already seen in the MF Aggregate code: <code>MODEL_DICT</code> picks an <code>SS_MF_…</code> model from the
+combination of sources available.</p>
+<h3 id="calibration-and-alignment">Calibration and alignment<a class="headerlink" href="#calibration-and-alignment" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base score</td>
+<td>600</td>
+</tr>
+<tr>
+<td>Base odds</td>
+<td>20</td>
+</tr>
+<tr>
+<td>PDO (points to double the odds)</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Score range</td>
+<td>300 to 900</td>
+</tr>
+<tr>
+<td>Higher score means</td>
+<td>Lower risk</td>
+</tr>
+</tbody>
+</table>
+<p>Each component model has <strong>alignment</strong> parameters, a multiplier and an additive factor, configurable
+through a platform list and expected to change about once a year. The defaults are multiplier <strong>1</strong> and
+additive <strong>0</strong>, and the aligned score is truncated. This is the <strong><code>MODEL_ALIGNMENT</code></strong> lookup table that
+Aryan's change to the MF Aggregate Lambda reads from S3.</p>
+<h3 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
+<p><code>all_model_final_features.xlsx</code> (work in progress) lists every model feature with its type (raw,
+binned, percentile, derived flag, new calculation), how often it refreshes (never or monthly) and the
+code that builds it. Examples: <code>AAPBIZ_SCORE_PRIN</code> (raw), <code>AAPDAT_ZIP_MATCH</code> (derived),
+<code>AAPVAL_EXACT_TMF_PASSED</code> (derived flag), <code>ABA_NATG_AND_APPS_COMBINED</code> (binned, monthly),
+<code>TXN_PER_DAY_PERCENTILE</code> (percentile, monthly). A comment on this section is assigned to Aryan Patel.</p>
+<h2 id="testing-and-release-sections-4-onwards">Testing and release (sections 4 onwards)<a class="headerlink" href="#testing-and-release-sections-4-onwards" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Every test</strong></td>
+<td>Record the environment, build, artifact checksum, data version, who ran it, when, evidence, defects, fixes, retests, approval. Entry and exit criteria are set before running</td>
+</tr>
+<tr>
+<td><strong>4a. Integration test cases</strong> (for TCOE)</td>
+<td>Positive, negative, boundary, <strong>null</strong>, <strong>malformed</strong>, <strong>duplicate</strong>, timing, segmentation, threshold, rule-conflict, calibration, reason-code, <strong>mapping</strong>, replay and failure-recovery cases. Every requirement maps to at least one case</td>
+</tr>
+<tr>
+<td><strong>4b. Statistical dataset</strong></td>
+<td>A frozen set of <strong>10,000 records</strong> with all production inputs and precomputed expected outputs, covering the full population, exclusions, rules, score tails, thresholds, missing-value handling and reason codes. Masked or synthetic. Recorded so far: <em>Normalizer</em>, 10,000 records, "99,992 matched" on 9-30-2026 (as written; likely 9,992); <em>Feature</em>, 150,000 records, no result yet</td>
+</tr>
+<tr>
+<td><strong>4c. Non-functional</strong></td>
+<td>Latency (p50 / p95 / p99), throughput, scalability, availability and resilience, restart and replay, and more, each with a target and evidence</td>
+</tr>
+<tr>
+<td><strong>Artifact register</strong></td>
+<td>Process flow, input schema and mapping, feature code, model artifacts with checksums, calibration, reason codes, rules and configuration: each with a location, owner and status</td>
+</tr>
+<tr>
+<td><strong>Release readiness</strong></td>
+<td>Artifacts approved and versioned; production matches the approved versions; tests pass; <strong>monitoring, alerting</strong>, support ownership, replay, rollback and change control <strong>operational</strong>; downstream consumers validated; sign-off by business, technology, QA, model development, <strong>model risk management</strong>, information security, privacy and operations</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-it-means-for-data-quality-monitoring">What it means for data quality monitoring<a class="headerlink" href="#what-it-means-for-data-quality-monitoring" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>What it changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Day 1 went live on 15 October 2026</strong>, on the A1 record</td>
+<td>Monitoring is now needed for live data, not only for January. The A1 tables are the first real target</td>
+</tr>
+<tr>
+<td>The <strong>A1 output Snowflake table</strong> and a <strong>Full response Snowflake table</strong> exist from Day 1</td>
+<td>The first real tables to point the template at. The full-response table is most likely the <strong>raw data</strong> Michelle wants compared with the payload <strong>(inferred)</strong></td>
+</tr>
+<tr>
+<td>The <strong>input mapping spreadsheet</strong> lists model field, source, raw field name and raw file</td>
+<td>This is the <strong>mapping sheet</strong> the comparison checks (<code>MATCHES_SOURCE</code>, <code>LOST_IN_MAPPING</code>) need. Its rows translate almost directly into template rows</td>
+</tr>
+<tr>
+<td><strong>56 new A1 input fields</strong> (rows 377–432)</td>
+<td>The first fields to put under input checks: they are new, so most likely to arrive empty or mis-mapped</td>
+</tr>
+<tr>
+<td><strong><code>SSN_TAX_ID_MATCH</code></strong> has three valid values</td>
+<td>An <code>ACCEPTED_VALUES</code> check (<code>'1','0','Z'</code>), and a business rule that recomputes it from SSN and Tax ID</td>
+</tr>
+<tr>
+<td><strong>Minimum data criteria</strong> per source (<code>CY</code> statuses, ThreatMetrix request result)</td>
+<td>A <strong>hit rate per source</strong>: the share of applications where each source had enough data to be scored. A drop is the "provider stopped returning data" signal</td>
+</tr>
+<tr>
+<td><strong>Exclusions</strong> (additional outlets, WISO) are not scored by A1</td>
+<td>Checks on scored data must leave them out, or volume and missing-value checks will mis-fire</td>
+</tr>
+<tr>
+<td><strong>Scores are 300–900</strong>, higher is lower risk</td>
+<td>The existing <code>FINAL_SCORE_IN_RANGE</code> rule matches. The same range applies to component and aligned scores</td>
+</tr>
+<tr>
+<td><strong>Alignment</strong> defaults are multiplier 1, additive 0</td>
+<td>A check on <code>MODEL_ALIGNMENT</code>: values present for every model, client and channel in use, and within sensible bounds</td>
+</tr>
+<tr>
+<td><strong>Reason-code groups G0–G9</strong></td>
+<td>Output monitoring (Phase 2): how often each group fires, per hour or day</td>
+</tr>
+<tr>
+<td><strong>Experian bureau will be replaced by Equifax</strong></td>
+<td>Expect volume and missing-value changes on bureau fields; plan the switch in the template</td>
+</tr>
+<tr>
+<td>Release readiness requires <strong>monitoring and alerting to be operational</strong></td>
+<td>The DQ framework is part of what the release is signed off on, not an extra</td>
+</tr>
+<tr>
+<td>Test types include null, malformed, duplicate and mapping cases</td>
+<td>The same check types run in production by the DQ framework; its results can serve as evidence</td>
+</tr>
+</tbody>
+</table>
+<h2 id="questions-this-raises">Questions this raises<a class="headerlink" href="#questions-this-raises" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+<th>For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>What are the Snowflake paths of the <strong>A1 output</strong> table and the <strong>full response</strong> table, and their timestamp columns?</td>
+<td>Ameya Jadhavar / data owner</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Is the full-response table the "raw data" in Michelle's email?</td>
+<td>Michelle Davis</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Can we have read access to the input and output mapping spreadsheets, to generate the comparison rows?</td>
+<td>Srayasee Chakraborty</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Which A1 field marks an application as excluded (additional outlet, WISO)?</td>
+<td>Model team</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Where do the inquiry statuses (<code>CY</code>) and the ThreatMetrix request result live in the A1 record?</td>
+<td>Model team</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Is "Normalizer: 99,992 matched" of 10,000 a typo for 9,992?</td>
+<td>Document owner</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Should the DQ framework be listed in the artifact register and the release sign-off as the monitoring and alerting component?</td>
+<td>Manager</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../requirements-update/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Requirements update: reconciliation &amp; no-activity">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Requirements update: reconciliation & no-activity
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../dq-framework-build/" class="md-footer__link md-footer__link--next" aria-label="Next: The framework: design and status">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                The framework: design and status
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+        <script src="../../javascripts/mermaid-labels.js"></script>
+      
+    
+  </body>
+</html>

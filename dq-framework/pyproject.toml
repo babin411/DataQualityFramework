@@ -1,0 +1,28 @@
+[project]
+name = "dqf"
+version = "0.1.0"
+description = "Data quality framework: Great Expectations checks on Snowflake, run by AWS Lambda, alerts by SNS"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+# The same as requirements.in, which pins what the Lambda installs.
+dependencies = ["great-expectations[snowflake]==1.24.0", "openpyxl>=3.1"]
+
+[project.optional-dependencies]
+# Only for development: boto3 ships with the Lambda runtime; the report and tests are not deployed.
+dev = ["boto3>=1.34", "streamlit>=1.40", "pytest>=8", "pyyaml>=6"]
+
+[project.scripts]
+dqf = "dqf.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dqf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["snowflake: needs a real Snowflake login (run with DQF_SNOWFLAKE_TESTS=1)",
+           "localstack: needs LocalStack running (run with DQF_LOCALSTACK_TESTS=1)"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]

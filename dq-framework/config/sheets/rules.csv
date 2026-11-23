@@ -1,0 +1,5 @@
+RULE_NAME,DESCRIPTION,APPLIES_TO,WHEN,THEN,CHECK,WITH,MAX_BAD_PCT,ALERT
+DECISION_MATCHES_SCORE,No auto-approval with a merchant fraud score below 400,UW_A1_SCORED,{DECISION: AUTO_APPROVE},{MF_SCORE: {at_least: 400}},,,,Yes
+MINIMUM_DATA_FOR_MODEL,A model with the Experian component is used only when Experian returned data,UW_A1_SCORED,"{MF_MODEL_USED: [SS_MF_100, SS_MF_101]}","{BUREAU_INQUIRY_STATUS: CY, BIZID_INQUIRY_STATUS: CY}",,,,Yes
+SCORES_IN_RANGE,Scores lie between 300 and 900,UW_A1_SCORED,,"{MF_SCORE: {between: [300, 900]}, IT_SCORE: {between: [300, 900]}, CR_SCORE: {between: [300, 900]}}",,,,Yes
+SSN_TAX_ID_MATCH_DERIVED,SSN_TAX_ID_MATCH follows the documented derivation,UW_A1_INPUT,,,ssn_tax_id_match_follows_derivation,,,Yes

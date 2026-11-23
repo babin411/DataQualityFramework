@@ -1,0 +1,231 @@
+# #################################################################################################
+#
+#   DATA QUALITY CONFIGURATION
+#
+#   This file says WHAT the data quality framework checks. It is the only thing to change to add,
+#   remove or adjust a check. No code, no SQL.
+#
+#   Every hour (and every day) the framework reads this file, runs every check that belongs to that
+#   schedule against Snowflake, stores the results in DQF_DB.DQF.DQ_RESULT, and emails an alert when
+#   something starts failing, recovers, or keeps failing.
+#
+#   After any change:   make validate     (lists every mistake, with where it is in this file)
+#
+# -------------------------------------------------------------------------------------------------
+#   THE TWO SECTIONS
+#
+#   sources:   WHERE to look.  A source is one table (or view) in Snowflake, looked at a certain way
+#              and on a certain schedule. Each source lists the standard checks for that data.
+#
+#   rules:     BUSINESS RULES.  A rule describes what must be true of the data, in the business's own
+#              terms ("an auto-approved application must have a score of at least 400"). Each rule
+#              says which source(s) it applies to.
+#
+#   In short: a SOURCE answers "which data, how often?"; a CHECK or RULE answers "what must be true?".
+#   Standard checks (empty values, allowed values, formats, ...) live inside their source. Business
+#   rules, which usually combine several fields, live in their own section and point at a source.
+#
+# -------------------------------------------------------------------------------------------------
+#   WORDS USED BELOW
+#
+#   window        the slice of data one run looks at: the previous full hour (schedule: hourly) or the
+#                 previous full day, UTC (schedule: daily). A run at 10:20 checks 09:00 to 10:00.
+#   field         a column of the table, e.g. AVG_TICKET
+#   max_bad_pct   how many rows may break a check before it FAILS, as a % of the rows checked
+#                 (0 = none may; 30 = up to 30% may). Leave it out for 0.
+#   alert         yes = email when the check starts failing, recovers, or is still failing a day later.
+#                 no  = still checked and shown in the reports, but no email.
+#
+#   Write text that looks like a number in quotes ('1', '01'), and quote regular expressions.
+#   This file is YAML: indentation matters (2 spaces per level), and "- " starts a list item.
+# #################################################################################################
+
+sources:
+
+# =================================================================================================
+#   SOURCES
+#
+#   Each block below is one source. The name (e.g. UW_A1_INPUT) is a short label of your choice; the
+#   results, alerts and rules refer to it.
+#
+#   table         the Snowflake table or view: DATABASE.SCHEMA.TABLE
+#   ts_column     the timestamp (or date) column that says when a row happened. It decides which rows
+#                 fall in each window.
+#   schedule      hourly or daily: how often this source is checked, and how big the window is
+#   row_filter    optional: only rows matching this condition are checked, e.g. only scored applications
+#   description   free text, for people
+#   checks        the standard checks on each window (types listed below)
+#   stability     drift checks: does recent data still look like the past? (daily sources only)
+#
+#   ONE TABLE CAN BE SEVERAL SOURCES. All three sources here read the same table, UW_A1_RECORD, but each
+#   looks at it differently:
+#     UW_A1_INPUT    every application, each hour       -> input checks apply to all applications
+#     UW_A1_SCORED   only scored applications, each hour -> score checks only make sense for those
+#     UW_A1_DAILY    only scored applications, each day  -> daily volume and drift need a whole day
+#
+#   CHECK TYPES (check_type), and what makes each one fail:
+#     VOLUME              fewer than `min` (or more than `max`) rows in the window: data stopped arriving
+#     FRESHNESS           the newest row is more than `max` hours old
+#     MISSING_VALUES      `field` is empty in more than max_bad_pct of rows (FIELD_POPULATION: the same)
+#     ACCEPTED_VALUES     `field` has a value not in `values`; with values [CY] it is a data-source hit rate
+#     PLACEHOLDER_VALUE   `field` holds a placeholder from `values` (e.g. -999) instead of real data
+#     ACCEPTABLE_RANGE    `field` is outside `min` .. `max`
+#     EXPECTED_FORMAT     `field` does not match the pattern `regex`
+#     VALUE_LENGTH        `field` is shorter than `min` or longer than `max` characters
+#     DUPLICATE_VALUES    `field` repeats: a key that should be unique
+#     SOURCE_COVERAGE, MATCHES_SOURCE, LOST_IN_MAPPING   compare with another source (payload vs raw)
+# =================================================================================================
+
+  # ---- 1. Every Underwriting application, checked each hour ---------------------------------------
+  UW_A1_INPUT:
+    table: DQF_DB.DQF.UW_A1_RECORD
+    ts_column: REQUEST_TS                  # when the application arrived
+    schedule: hourly                       # a run at 10:20 checks 09:00 to 10:00
+    description: "Underwriting A1 record: every application, as it arrives"
+    checks:
+      # -- Is data arriving?
+      - {check_type: VOLUME, min: 1, alert: yes}                         # at least 1 application an hour
+      - {check_type: FRESHNESS, max: 2, alert: yes}                      # newest row at most 2 hours old
+      # -- Keys and identifiers
+      - {field: APPLICATION_ID, check_type: DUPLICATE_VALUES, max_bad_pct: 0, alert: yes}   # no repeats
+      - {field: MERCH_ID, check_type: MISSING_VALUES, max_bad_pct: 30, alert: no}           # up to 30% empty
+      - {field: MERCH_ID, check_type: VALUE_LENGTH, min: 8, max: 15, max_bad_pct: 5, alert: yes}
+      # -- Application data
+      - {field: AVG_TICKET, check_type: MISSING_VALUES, max_bad_pct: 30, alert: yes}
+      - {field: AVG_TICKET, check_type: ACCEPTABLE_RANGE, min: 0, max: 25000, max_bad_pct: 5, alert: no}
+      - {field: AVG_TICKET, check_type: PLACEHOLDER_VALUE, values: [-999], max_bad_pct: 10, alert: yes}
+      - {field: ANNUAL_VOLUME, check_type: FIELD_POPULATION, max_bad_pct: 20, alert: no}
+      - {field: ENQUIRY_DATE, check_type: PLACEHOLDER_VALUE, values: ['1900-01-01'], max_bad_pct: 5, alert: no}
+      - {field: CLIENT_ID, check_type: ACCEPTED_VALUES, values: [C100, C200, C300], max_bad_pct: 2, alert: yes}
+      - {field: CHANNEL, check_type: ACCEPTED_VALUES, values: [WEB, POS, API], max_bad_pct: 2, alert: yes}
+      - {field: ZIP, check_type: EXPECTED_FORMAT, regex: '^[0-9]{5}$', max_bad_pct: 10, alert: yes}      # 5 digits
+      - {field: MCC, check_type: EXPECTED_FORMAT, regex: '^[0-9]{4}$', max_bad_pct: 5, alert: no}       # 4 digits
+      # -- SSN / Tax ID match flag: only '1', '0' or 'Z' are valid.
+      #    (Whether it is the RIGHT value is a business rule: SSN_TAX_ID_MATCH_DERIVED, further down.)
+      - {field: SSN_TAX_ID_MATCH, check_type: ACCEPTED_VALUES, values: ['1', '0', 'Z'], max_bad_pct: 0, alert: yes}
+      # -- Data-source hit rates: did the bureau / CLN return data ('CY')? At most 30% may not.
+      - {field: BUREAU_INQUIRY_STATUS, check_type: ACCEPTED_VALUES, values: [CY], max_bad_pct: 30, alert: yes}
+      - {field: CLN_INQUIRY_STATUS, check_type: ACCEPTED_VALUES, values: [CY], max_bad_pct: 30, alert: no}
+
+  # ---- 2. The same table, only the applications the models scored, each hour ----------------------
+  UW_A1_SCORED:
+    table: DQF_DB.DQF.UW_A1_RECORD
+    ts_column: REQUEST_TS
+    schedule: hourly
+    row_filter: EXCLUSION_REASON is null   # additional outlets and WISO are not scored: leave them out
+    description: "Underwriting A1 record: applications the models scored (excludes additional outlets and WISO)"
+    checks:
+      - {field: MF_SCORE, check_type: MISSING_VALUES, max_bad_pct: 0, alert: yes}           # every one has a score
+      - {field: DECISION, check_type: ACCEPTED_VALUES, values: [AUTO_APPROVE, MANUAL_REVIEW, AUTO_DECLINE], max_bad_pct: 0, alert: yes}
+
+  # ---- 3. The scored applications by day: daily volume, and drift against the past ----------------
+  UW_A1_DAILY:
+    table: DQF_DB.DQF.UW_A1_RECORD
+    ts_column: REQUEST_TS
+    schedule: daily                        # a run at 01:30 UTC checks the whole previous day
+    row_filter: EXCLUSION_REASON is null
+    description: "Underwriting A1 record, by day: volume, and drift of features and scores against the benchmark"
+    checks:
+      - {check_type: VOLUME, min: 300, alert: yes}                       # at least 300 scored a day
+      - {check_type: FRESHNESS, max: 26, alert: yes}
+    # STABILITY (drift): has a score or feature started to look different from how it used to?
+    #   field           the score (index: PSI) or feature (index: CSI) to compare
+    #   field_type      NUMERIC (compared in bins of values) or CATEGORICAL (compared by value)
+    #   benchmark_*     the "normal" period: days before the run (-60 to -30 = from 60 to 30 days ago),
+    #                   or fixed dates ('2026-01-01')
+    #   active_days     the recent period compared with it: the last 7 days
+    #   warn / fail     limits on the index: from 0.10 it is a warning (report only), from 0.25 a failure
+    stability:
+      - {field: MF_SCORE, index: PSI, field_type: NUMERIC, bins: 10, benchmark_start: -60, benchmark_end: -30, active_days: 7, warn: 0.10, fail: 0.25, alert: yes}
+      - {field: IT_SCORE, index: PSI, field_type: NUMERIC, bins: 10, benchmark_start: -60, benchmark_end: -30, active_days: 7, warn: 0.10, fail: 0.25, alert: yes}
+      - {field: AVG_TICKET, index: CSI, field_type: NUMERIC, bins: 10, benchmark_start: -60, benchmark_end: -30, active_days: 7, warn: 0.10, fail: 0.25, alert: yes}
+      - {field: TXN_PER_DAY_PERCENTILE, index: CSI, field_type: NUMERIC, bins: 10, benchmark_start: -60, benchmark_end: -30, active_days: 7, warn: 0.10, fail: 0.25, alert: yes}
+      - {field: CHANNEL, index: CSI, field_type: CATEGORICAL, bins: 10, benchmark_start: -60, benchmark_end: -30, active_days: 7, warn: 0.10, fail: 0.25, alert: yes}
+      - {field: HOMEBASED_PHONE_FLAG, index: CSI, field_type: CATEGORICAL, bins: 10, benchmark_start: -60, benchmark_end: -30, active_days: 7, warn: 0.10, fail: 0.25, alert: no}
+
+# =================================================================================================
+#   BUSINESS RULES
+#
+#   A business rule states what must be true of the data, in the business's own terms. Unlike the
+#   standard checks above (one field, one kind of test), a rule can combine fields:
+#   "WHEN an application is auto-approved, THEN its score must be at least 400."
+#
+#   Each rule has a NAME (a label of your choice, e.g. DECISION_MATCHES_SCORE) and:
+#     description   the rule in one sentence. It appears in the alert email and the reports.
+#     applies_to    the source the rule checks (or a list of sources). The rule then runs on that
+#                   source's schedule, window and row_filter.
+#     when          WHICH ROWS the rule is about. Leave it out to check every row.
+#     then          WHAT MUST BE TRUE of those rows.
+#     check         instead of `then`: the name of a custom check a developer has written (rare)
+#     max_bad_pct   how many of those rows may break the rule, in % (default 0: none)
+#     alert         yes / no, as for checks
+#
+#   HOW TO READ A RULE:   when {A: x}  then {B: {at_least: 400}}
+#                   =     "for every row where A is x, B must be at least 400"
+#
+#   Words for `when` and `then`:
+#     FIELD: value                 is / must be that value                     DECISION: AUTO_APPROVE
+#     FIELD: [a, b]                is / must be one of them                    MF_MODEL_USED: [SS_MF_100, SS_MF_101]
+#     FIELD: present / missing     has a value / is empty                      SSN_LAST4: missing
+#     FIELD: {not: v}              is not / must not be v                      DECISION: {not: AUTO_DECLINE}
+#     FIELD: {not_in: [a, b]}      is not / must not be any of them
+#     FIELD: {at_least: n}         n or more          {at_most: n}   n or less
+#     FIELD: {above: n}            more than n        {below: n}     less than n
+#     FIELD: {between: [lo, hi]}   from lo to hi, inclusive                   MF_SCORE: {between: [300, 900]}
+#   Only in `then`:
+#     FIELD: {matches: 'regex'}    must match a pattern (and {not_matches: 'regex'})
+#     FIELD: {length_between: [lo, hi]}   must be lo to hi characters long
+#     FIELD: {equals_field: OTHER} must equal another field of the same row
+#
+#   Several fields in `when`: ALL must match.    when: {DECISION: AUTO_APPROVE, CHANNEL: WEB}
+#   A list in `when`: ANY one of them.           when: [{SSN_LAST4: missing}, {TAX_ID_LAST4: missing}]
+#   Several fields in `then`: EACH must hold; the rule fails if any one does not, and the alert says which.
+#   Empty values are not judged by `then` value words; add `FIELD: present` to require a value.
+#
+#   Behind the scenes each `then` field becomes a built-in Great Expectations check, limited to the
+#   `when` rows. Nobody writes SQL. The alert explains a broken rule in words, e.g. "broken in 66.7% of
+#   rows where DECISION is AUTO_APPROVE (2 of 3 rows)", with a query to list those rows.
+#
+#   These rules come from the Implementation Support Document for Underwriting US V2.
+# =================================================================================================
+rules:
+
+  # In words: every auto-approved application must have a merchant fraud score of at least 400.
+  DECISION_MATCHES_SCORE:
+    description: No auto-approval with a merchant fraud score below 400
+    applies_to: UW_A1_SCORED
+    when: {DECISION: AUTO_APPROVE}                 # the rows: auto-approved applications
+    then: {MF_SCORE: {at_least: 400}}              # must hold: score of 400 or more
+    alert: yes
+
+  # In words: when the model used includes the Experian component (SS_MF_100 or SS_MF_101), both the
+  # bureau and BizID inquiries must have returned data ('CY'). Minimum data criteria, section 2d.
+  MINIMUM_DATA_FOR_MODEL:
+    description: A model with the Experian component is used only when Experian returned data
+    applies_to: UW_A1_SCORED
+    when: {MF_MODEL_USED: [SS_MF_100, SS_MF_101]}  # the rows: scored with an Experian model
+    then:                                          # must hold: both of these
+      BUREAU_INQUIRY_STATUS: CY
+      BIZID_INQUIRY_STATUS: CY
+    alert: yes
+
+  # In words: all three scores of every scored application are between 300 and 900. Calibration, 2f.
+  # No `when`: it applies to every row of the source.
+  SCORES_IN_RANGE:
+    description: Scores lie between 300 and 900
+    applies_to: UW_A1_SCORED
+    then:
+      MF_SCORE: {between: [300, 900]}
+      IT_SCORE: {between: [300, 900]}
+      CR_SCORE: {between: [300, 900]}
+    alert: yes
+
+  # In words: SSN_TAX_ID_MATCH is '1' when the SSN and Tax ID (last 4) are equal, '0' when they differ,
+  # and 'Z' when either is missing (section 1). Checking it means comparing two fields with each other
+  # and working out the expected flag, which the words above cannot express, so it uses a custom check
+  # a developer wrote once (src/dqf/expectations.py). Using it here needs no code.
+  SSN_TAX_ID_MATCH_DERIVED:
+    description: SSN_TAX_ID_MATCH follows the documented derivation
+    applies_to: UW_A1_INPUT
+    check: ssn_tax_id_match_follows_derivation
+    alert: yes
